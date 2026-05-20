@@ -90,18 +90,24 @@
             </a-form-item>
             <a-form-item :label="$t('user.model')">
               <div class="model-select-wrapper">
+                <a-radio-group v-model:value="isCustomModel" style="margin-bottom: 8px">
+                  <a-radio :value="false">{{ $t('user.selectFromList') }}</a-radio>
+                  <a-radio :value="true">{{ $t('user.customModel') }}</a-radio>
+                </a-radio-group>
                 <a-select
-                  v-if="modelPool.length"
-                  v-model:value="aiForm.model"
+                  v-if="!isCustomModel"
+                  v-model:value="aiForm.model_id"
                   :placeholder="$t('user.selectModel')"
                   allow-clear
                   show-search
                   :filter-option="filterModelOption"
                   style="width: 100%"
                 >
-                  <a-select-option v-for="m in modelPool" :key="m" :value="m">{{ m }}</a-select-option>
+                  <a-select-option v-for="m in availableModels" :key="m.id" :value="m.id">
+                    {{ m.provider ? `[${m.provider}] ` : '' }}{{ m.name }}
+                  </a-select-option>
                 </a-select>
-                <a-input v-else v-model:value="aiForm.model" :placeholder="$t('user.model')" />
+                <a-input v-else :placeholder="$t('user.model')" />
               </div>
             </a-form-item>
             <a-form-item :label="$t('user.temperature')" name="temperature">
@@ -130,6 +136,7 @@ import { message } from 'ant-design-vue'
 import {
   getUserInfo, updateUserInfo, changePassword, uploadAvatar,
   getAIConfig, updateAIConfig, getSubscription, updateSubscription,
+  getAvailableModels,
 } from '@/api/user'
 import { getCategories } from '@/api/article'
 
@@ -141,7 +148,7 @@ const changingPwd = ref(false)
 const savingAI = ref(false)
 const savingSubscription = ref(false)
 const allCategories = ref<any[]>([])
-const modelPool = ref<string[]>([])
+const availableModels = ref<any[]>([])
 
 const profileForm = reactive({
   nickname: '',
@@ -165,13 +172,16 @@ const subscriptionForm = reactive({
 const aiForm = reactive({
   api_token: '',
   api_url: '',
-  model: '',
+  model_id: 0,
+  custom_model: '',
   temperature: 0.7,
   max_context: 10,
 })
 
+const isCustomModel = ref(false)
+
 function filterModelOption(input: string, option: any) {
-  return option.value?.toLowerCase().includes(input.toLowerCase())
+  return option.label?.toLowerCase().includes(input.toLowerCase())
 }
 
 async function fetchUserInfo() {
@@ -183,12 +193,30 @@ async function fetchUserInfo() {
   }
 }
 
+async function fetchAvailableModels() {
+  try {
+    const res = await getAvailableModels()
+    availableModels.value = res.data || []
+  } catch {
+    // handled
+  }
+}
+
 async function fetchAIConfig() {
   try {
     const res = await getAIConfig()
-    Object.assign(aiForm, res.data)
-    if (res.data?.model_pool) {
-      modelPool.value = res.data.model_pool
+    Object.assign(aiForm, {
+      api_token: res.data?.api_token || '',
+      api_url: res.data?.api_url || '',
+      model_id: res.data?.model_id || 0,
+      temperature: res.data?.temperature || 0.7,
+      max_context: res.data?.max_context || 10,
+    })
+    // 如果有 model_id 且存在于 availableModels 中，则不是自定义模型
+    const hasSelectedModel = availableModels.value.some((m: any) => m.id === aiForm.model_id)
+    isCustomModel.value = !hasSelectedModel && !!res.data?.model_id
+    if (!isCustomModel.value && !hasSelectedModel) {
+      aiForm.model_id = 0
     }
   } catch {
     // handled
@@ -272,7 +300,14 @@ async function handleUpdateSubscription() {
 async function handleUpdateAIConfig() {
   savingAI.value = true
   try {
-    await updateAIConfig(aiForm)
+    const submitData: any = {
+      api_token: aiForm.api_token,
+      api_url: aiForm.api_url,
+      model_id: isCustomModel.value ? 0 : aiForm.model_id,
+      temperature: aiForm.temperature,
+      max_context: aiForm.max_context,
+    }
+    await updateAIConfig(submitData)
     message.success(t('user.aiConfigSaved'))
   } catch {
     // handled
@@ -281,7 +316,8 @@ async function handleUpdateAIConfig() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await fetchAvailableModels()
   fetchUserInfo()
   fetchAIConfig()
   fetchSubscription()

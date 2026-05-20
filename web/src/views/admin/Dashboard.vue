@@ -58,7 +58,7 @@
             <div class="monitor-item">
               <div class="monitor-label">{{ $t('admin.cpuUsage') }}</div>
               <a-progress :percent="monitor.cpu || 0" :stroke-color="getProgressColor(monitor.cpu)" />
-              <div class="monitor-value">{{ (monitor.cpu || 0).toFixed(1) }}%</div>
+              <div class="monitor-value">{{ (monitor.cpu || 0).toFixed(2) }}%</div>
             </div>
             <div class="monitor-item">
               <div class="monitor-label">{{ $t('admin.memoryUsage') }}</div>

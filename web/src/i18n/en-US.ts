@@ -133,6 +133,8 @@ export default {
     notifyChannel: 'Notification Channel',
     categorySubscription: 'Category Subscription',
     selectModel: 'Select a model',
+    selectFromList: 'Select from list',
+    customModel: 'Custom model',
     profileSaved: 'Profile saved',
     avatarUploadSuccess: 'Avatar uploaded',
     passwordMismatch: 'Passwords do not match',

@@ -23,6 +23,17 @@ func GetSystemConfig(c *gin.Context) {
 		result[cfg.Key] = cfg.Value
 	}
 
+	// 默认值
+	if result["site_name"] == "" {
+		result["site_name"] = "GoBlog"
+	}
+	if result["register_enabled"] == "" {
+		result["register_enabled"] = "true"
+	}
+	if result["copyright"] == "" {
+		result["copyright"] = "Copyright © 2024 GoBlog. All rights reserved."
+	}
+
 	responseSuccess(c, result)
 }
 

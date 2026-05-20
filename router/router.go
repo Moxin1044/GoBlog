@@ -55,6 +55,7 @@ func SetupRouter(r *gin.Engine) {
 			// AI配置
 			user.GET("/ai-config", handler.GetAIConfig)
 			user.PUT("/ai-config", handler.UpdateAIConfig)
+			user.GET("/ai-models", handler.GetAvailableModels)
 
 			// AI对话
 			user.POST("/chat", handler.Chat)

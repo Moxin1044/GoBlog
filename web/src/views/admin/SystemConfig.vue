@@ -116,9 +116,9 @@ const saving = ref(false)
 const activeTab = ref('basic')
 
 const formState = reactive({
-  site_name: '',
+  site_name: 'GoBlog',
   site_logo: '',
-  copyright: '',
+  copyright: 'Copyright © 2024 GoBlog. All rights reserved.',
   icp: '',
   register_enabled: true,
   smtp_host: '',
@@ -134,7 +134,12 @@ async function fetchConfig() {
   loading.value = true
   try {
     const res = await getSystemConfig()
-    Object.assign(formState, res.data)
+    const data = res.data || {}
+    // 处理 register_enabled 可能是字符串的情况
+    if (data.register_enabled !== undefined) {
+      data.register_enabled = data.register_enabled === 'true' || data.register_enabled === true
+    }
+    Object.assign(formState, data)
   } catch { /* handled */ } finally {
     loading.value = false
   }

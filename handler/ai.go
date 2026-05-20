@@ -249,6 +249,16 @@ func Chat(c *gin.Context) {
 	}
 }
 
+// GetAvailableModels 获取可用的AI模型列表
+func GetAvailableModels(c *gin.Context) {
+	var models []model.AIModel
+	if err := database.DB.Where("enabled = ?", true).Order("id ASC").Find(&models).Error; err != nil {
+		responseErrorWithCode(c, http.StatusInternalServerError, "获取模型列表失败")
+		return
+	}
+	responseSuccess(c, models)
+}
+
 // GetChatHistory 获取对话历史
 func GetChatHistory(c *gin.Context) {
 	userID := c.GetUint("user_id")

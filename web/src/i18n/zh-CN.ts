@@ -133,6 +133,8 @@ export default {
     notifyChannel: '通知渠道',
     categorySubscription: '分类订阅',
     selectModel: '请选择模型',
+    selectFromList: '从列表选择',
+    customModel: '自定义模型',
     profileSaved: '个人信息已保存',
     avatarUploadSuccess: '头像上传成功',
     passwordMismatch: '两次输入的密码不一致',
