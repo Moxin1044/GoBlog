@@ -191,7 +191,11 @@ function formatBytes(bytes: number) {
 async function fetchDashboard() {
   try {
     const res = await getDashboard()
-    Object.assign(stats, res.data)
+    const data = res.data || {}
+    stats.totalVisits = data.total_views || 0
+    stats.totalArticles = data.article_count || 0
+    stats.totalWords = data.total_words || 0
+    stats.pendingComments = data.comment_count || 0
   } catch { /* handled */ }
 }
 
@@ -199,15 +203,20 @@ async function fetchMonitor() {
   try {
     const res = await getServerMonitor()
     const data = res.data || {}
-    monitor.cpu = data.cpu || 0
-    monitor.memoryPercent = data.memory_percent || data.memory || 0
-    monitor.memoryUsed = data.memory_used || 0
-    monitor.memoryTotal = data.memory_total || 0
-    monitor.diskPercent = data.disk_percent || data.disk || 0
-    monitor.diskUsed = data.disk_used || 0
-    monitor.diskTotal = data.disk_total || 0
-    monitor.networkUpload = data.network_upload || 0
-    monitor.networkDownload = data.network_download || 0
+    const cpu = data.cpu || {}
+    const memory = data.memory || {}
+    const disk = data.disk || {}
+    const network = data.network || {}
+
+    monitor.cpu = Array.isArray(cpu.percent) ? cpu.percent[0] || 0 : (cpu.percent || 0)
+    monitor.memoryPercent = memory.used_percent || 0
+    monitor.memoryUsed = memory.used || 0
+    monitor.memoryTotal = memory.total || 0
+    monitor.diskPercent = disk.used_percent || 0
+    monitor.diskUsed = disk.used || 0
+    monitor.diskTotal = disk.total || 0
+    monitor.networkUpload = network.bytes_sent || 0
+    monitor.networkDownload = network.bytes_recv || 0
   } catch { /* handled */ }
 }
 

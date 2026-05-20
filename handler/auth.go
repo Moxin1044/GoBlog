@@ -141,6 +141,62 @@ func Login(c *gin.Context) {
 	})
 }
 
+// AdminLogin 管理员登录
+func AdminLogin(c *gin.Context) {
+	var req struct {
+		Account  string `json:"account" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responseError(c, "参数错误: "+err.Error())
+		return
+	}
+
+	var admin model.Admin
+	if err := database.DB.Where("username = ? OR email = ?", req.Account, req.Account).First(&admin).Error; err != nil {
+		responseError(c, "用户名或密码错误")
+		return
+	}
+
+	if admin.Status == "disabled" {
+		responseErrorWithCode(c, http.StatusForbidden, "账号已被禁用")
+		return
+	}
+
+	if !utils.CheckPassword(req.Password, admin.Password) {
+		responseError(c, "用户名或密码错误")
+		return
+	}
+
+	token, err := utils.GenerateToken(admin.ID, admin.Username, admin.Role, "admin")
+	if err != nil {
+		responseErrorWithCode(c, http.StatusInternalServerError, "生成token失败")
+		return
+	}
+
+	// 更新最后登录时间
+	now := time.Now()
+	database.DB.Model(&admin).Update("last_login_at", now)
+
+	// 记录登录日志
+	ip := utils.GetClientIP(c)
+	database.DB.Create(&model.VisitLog{
+		IP:        ip,
+		Path:      "/api/auth/admin-login",
+		UserAgent: utils.GetUserAgent(c),
+	})
+
+	responseSuccess(c, gin.H{
+		"token": token,
+		"user": gin.H{
+			"id":       admin.ID,
+			"username": admin.Username,
+			"email":    admin.Email,
+			"role":     admin.Role,
+		},
+	})
+}
+
 // SendVerifyCode 发送验证码
 func SendVerifyCode(c *gin.Context) {
 	var req struct {

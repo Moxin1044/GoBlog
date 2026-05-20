@@ -121,6 +121,8 @@ onMounted(async () => {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  justify-content: center;
+  min-height: 40px;
 }
 
 .category-tag {
@@ -137,6 +139,8 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
+  justify-content: center;
+  min-height: 40px;
 }
 
 .cloud-tag {

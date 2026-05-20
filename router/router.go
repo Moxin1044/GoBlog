@@ -18,6 +18,7 @@ func SetupRouter(r *gin.Engine) {
 		{
 			auth.POST("/register", handler.Register)
 			auth.POST("/login", handler.Login)
+			auth.POST("/admin-login", handler.AdminLogin)
 			auth.POST("/verify-code", handler.SendVerifyCode)
 		}
 

@@ -48,6 +48,8 @@ export default {
     sendCode: '发送验证码',
     loginTitle: '欢迎登录',
     registerTitle: '欢迎注册',
+    userLogin: '用户登录',
+    adminLogin: '管理员登录',
     forgotPassword: '忘记密码？',
     autoLogin: '自动登录',
     noAccount: '还没有账号？',

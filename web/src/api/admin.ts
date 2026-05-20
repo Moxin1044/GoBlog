@@ -1,5 +1,7 @@
 import request from './index'
 
+export const adminLogin = (data: { account: string; password: string }) => request.post('/auth/admin-login', data)
+
 export const getDashboard = () => request.get('/admin/dashboard')
 export const getServerMonitor = () => request.get('/admin/monitor')
 export const getVisitMapData = () => request.get('/admin/visit-map')

@@ -9,7 +9,8 @@
         <a-menu
           mode="horizontal"
           :selected-keys="selectedKeys"
-          class="nav-menu hidden-mobile"
+          class="nav-menu"
+          :overflowedIndicator="null"
           @click="handleMenuClick"
         >
           <a-menu-item key="home">{{ $t('nav.home') }}</a-menu-item>
@@ -211,6 +212,11 @@ function handleLogout() {
   background: transparent;
   border-bottom: none;
   line-height: 62px;
+  min-width: 0;
+
+  :deep(.ant-menu-overflow) {
+    display: flex;
+  }
 }
 
 .header-right {

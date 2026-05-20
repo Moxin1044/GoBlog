@@ -48,6 +48,8 @@ export default {
     sendCode: 'Send Code',
     loginTitle: 'Welcome Back',
     registerTitle: 'Create Account',
+    userLogin: 'User Login',
+    adminLogin: 'Admin Login',
     forgotPassword: 'Forgot Password?',
     autoLogin: 'Auto Login',
     noAccount: "Don't have an account?",
