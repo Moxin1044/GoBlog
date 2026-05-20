@@ -1,0 +1,44 @@
+server:
+  port: "8080"
+  mode: "debug"
+
+database:
+  host: "mysql"
+  port: 3306
+  user: "goblog"
+  password: "goblog123"
+  dbname: "goblog"
+
+jwt:
+  secret: "goblog-jwt-secret-key-change-in-production"
+  expire: 72
+  issuer: "GoBlog"
+
+smtp:
+  host: ""
+  port: 465
+  user: ""
+  password: ""
+  from: ""
+
+feishu:
+  token: ""
+  enabled: false
+
+upload:
+  path: "./uploads"
+  max_size: 10
+  allow_types:
+    - ".jpg"
+    - ".jpeg"
+    - ".png"
+    - ".gif"
+    - ".webp"
+
+ai:
+  enabled: true
+  max_daily_per_user: 50
+
+monitor:
+  enabled: true
+  map_enabled: true
