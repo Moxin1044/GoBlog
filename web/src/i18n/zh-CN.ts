@@ -145,6 +145,8 @@ export default {
   admin: {
     dashboard: '仪表盘',
     articleManage: '文章管理',
+    categoryManage: '分类管理',
+    tagManage: '标签管理',
     commentManage: '评论管理',
     userManage: '用户管理',
     adminManage: '管理员管理',
@@ -250,5 +252,16 @@ export default {
     newChat: '新对话',
     goToConfig: '前往配置',
     contextArticle: '当前文章上下文',
+  },
+  category: {
+    name: '分类名称',
+    nameEn: '英文名称',
+    sort: '排序',
+    nameRequired: '请输入分类名称',
+  },
+  tag: {
+    name: '标签名称',
+    nameEn: '英文名称',
+    nameRequired: '请输入标签名称',
   },
 }

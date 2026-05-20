@@ -28,6 +28,14 @@
         <FileTextOutlined />
         <span>{{ $t('admin.articleManage') }}</span>
       </a-menu-item>
+      <a-menu-item key="categories">
+        <FolderOutlined />
+        <span>{{ $t('admin.categoryManage') }}</span>
+      </a-menu-item>
+      <a-menu-item key="tags">
+        <TagsOutlined />
+        <span>{{ $t('admin.tagManage') }}</span>
+      </a-menu-item>
       <a-menu-item key="comments">
         <CommentOutlined />
         <span>{{ $t('admin.commentManage') }}</span>
@@ -66,6 +74,8 @@ import { useRouter, useRoute } from 'vue-router'
 import {
   DashboardOutlined,
   FileTextOutlined,
+  FolderOutlined,
+  TagsOutlined,
   CommentOutlined,
   UserOutlined,
   TeamOutlined,
@@ -98,6 +108,8 @@ const selectedKeys = computed(() => {
   const path = route.path
   if (path === '/admin') return ['dashboard']
   if (path.includes('article')) return ['articles']
+  if (path.includes('categor')) return ['categories']
+  if (path.includes('tag')) return ['tags']
   if (path.includes('comment')) return ['comments']
   if (path.includes('user')) return ['users']
   if (path.includes('admin-mgmt') || path.includes('admins')) return ['admins']

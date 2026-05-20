@@ -145,6 +145,8 @@ export default {
   admin: {
     dashboard: 'Dashboard',
     articleManage: 'Article Management',
+    categoryManage: 'Category Management',
+    tagManage: 'Tag Management',
     commentManage: 'Comment Management',
     userManage: 'User Management',
     adminManage: 'Admin Management',
@@ -250,5 +252,16 @@ export default {
     newChat: 'New Chat',
     goToConfig: 'Go to Config',
     contextArticle: 'Current Article Context',
+  },
+  category: {
+    name: 'Name',
+    nameEn: 'Name (EN)',
+    sort: 'Sort',
+    nameRequired: 'Name is required',
+  },
+  tag: {
+    name: 'Name',
+    nameEn: 'Name (EN)',
+    nameRequired: 'Name is required',
   },
 }

@@ -90,14 +90,24 @@
               </a-upload>
             </a-form-item>
             <a-form-item :label="$t('article.category')" name="category_id">
-              <a-select v-model:value="formState.category_id" :placeholder="$t('article.category')" allow-clear>
-                <a-select-option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</a-select-option>
-              </a-select>
+              <div class="select-with-add">
+                <a-select v-model:value="formState.category_id" :placeholder="$t('article.category')" allow-clear style="flex: 1">
+                  <a-select-option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</a-select-option>
+                </a-select>
+                <a-button type="text" @click="categoryModalVisible = true">
+                  <PlusOutlined />
+                </a-button>
+              </div>
             </a-form-item>
             <a-form-item :label="$t('article.tags')" name="tag_ids">
-              <a-select v-model:value="formState.tag_ids" mode="multiple" :placeholder="$t('article.tags')">
-                <a-select-option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</a-select-option>
-              </a-select>
+              <div class="select-with-add">
+                <a-select v-model:value="formState.tag_ids" mode="multiple" :placeholder="$t('article.tags')" style="flex: 1">
+                  <a-select-option v-for="tag in tags" :key="tag.id" :value="tag.id">{{ tag.name }}</a-select-option>
+                </a-select>
+                <a-button type="text" @click="tagModalVisible = true">
+                  <PlusOutlined />
+                </a-button>
+              </div>
             </a-form-item>
             <a-form-item :label="$t('article.publishTime')" name="published_at">
               <a-date-picker
@@ -127,6 +137,43 @@
         </a-col>
       </a-row>
     </a-form>
+
+    <!-- Category Modal -->
+    <a-modal
+      v-model:open="categoryModalVisible"
+      :title="$t('common.create') + $t('article.category')"
+      @ok="handleCreateCategory"
+      @cancel="categoryModalVisible = false"
+    >
+      <a-form layout="vertical">
+        <a-form-item :label="$t('category.name')">
+          <a-input v-model:value="newCategory.name" />
+        </a-form-item>
+        <a-form-item :label="$t('category.nameEn')">
+          <a-input v-model:value="newCategory.nameEn" />
+        </a-form-item>
+        <a-form-item :label="$t('category.sort')">
+          <a-input-number v-model:value="newCategory.sort" :min="0" style="width: 100%" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
+
+    <!-- Tag Modal -->
+    <a-modal
+      v-model:open="tagModalVisible"
+      :title="$t('common.create') + $t('article.tag')"
+      @ok="handleCreateTag"
+      @cancel="tagModalVisible = false"
+    >
+      <a-form layout="vertical">
+        <a-form-item :label="$t('tag.name')">
+          <a-input v-model:value="newTag.name" />
+        </a-form-item>
+        <a-form-item :label="$t('tag.nameEn')">
+          <a-input v-model:value="newTag.nameEn" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -136,9 +183,10 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   UploadOutlined, BoldOutlined, ItalicOutlined, FontSizeOutlined,
   LinkOutlined, PictureOutlined, CodeOutlined, TableOutlined, FunctionOutlined,
+  PlusOutlined,
 } from '@ant-design/icons-vue'
 import { message } from 'ant-design-vue'
-import { createArticle, adminGetArticle, updateArticle, adminGetCategories, adminGetTags, uploadImage } from '@/api/admin'
+import { createArticle, adminGetArticle, updateArticle, adminGetCategories, adminGetTags, uploadImage, createCategory, createTag } from '@/api/admin'
 import { useI18n } from 'vue-i18n'
 import { marked } from 'marked'
 import dayjs from 'dayjs'
@@ -152,6 +200,14 @@ const categories = ref<any[]>([])
 const tags = ref<any[]>([])
 const editorMode = ref<'split' | 'edit'>('split')
 const textareaRef = ref<any>(null)
+
+// Category modal
+const categoryModalVisible = ref(false)
+const newCategory = reactive({ name: '', nameEn: '', sort: 0 })
+
+// Tag modal
+const tagModalVisible = ref(false)
+const newTag = reactive({ name: '', nameEn: '' })
 
 const isEdit = computed(() => !!route.params.id)
 
@@ -254,6 +310,39 @@ async function handleCoverUpload(file: File) {
   return false
 }
 
+async function handleCreateCategory() {
+  if (!newCategory.name) {
+    message.warning(t('category.nameRequired'))
+    return
+  }
+  try {
+    const res = await createCategory(newCategory)
+    categories.value.push(res.data)
+    formState.category_id = res.data.id
+    categoryModalVisible.value = false
+    newCategory.name = ''
+    newCategory.nameEn = ''
+    newCategory.sort = 0
+    message.success(t('common.success'))
+  } catch { /* handled */ }
+}
+
+async function handleCreateTag() {
+  if (!newTag.name) {
+    message.warning(t('tag.nameRequired'))
+    return
+  }
+  try {
+    const res = await createTag(newTag)
+    tags.value.push(res.data)
+    formState.tag_ids.push(res.data.id)
+    tagModalVisible.value = false
+    newTag.name = ''
+    newTag.nameEn = ''
+    message.success(t('common.success'))
+  } catch { /* handled */ }
+}
+
 async function handleSubmit() {
   saving.value = true
   try {
@@ -291,6 +380,12 @@ onMounted(() => {
   h2 {
     margin: 0;
   }
+}
+
+.select-with-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .cover-preview {

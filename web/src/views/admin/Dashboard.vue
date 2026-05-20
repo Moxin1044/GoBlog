@@ -57,18 +57,18 @@
           <div class="monitor-grid">
             <div class="monitor-item">
               <div class="monitor-label">{{ $t('admin.cpuUsage') }}</div>
-              <a-progress :percent="monitor.cpu || 0" :stroke-color="getProgressColor(monitor.cpu)" />
+              <a-progress :percent="parseFloat((monitor.cpu || 0).toFixed(2))" :stroke-color="getProgressColor(monitor.cpu)" />
               <div class="monitor-value">{{ (monitor.cpu || 0).toFixed(2) }}%</div>
             </div>
             <div class="monitor-item">
               <div class="monitor-label">{{ $t('admin.memoryUsage') }}</div>
-              <a-progress :percent="monitor.memoryPercent || 0" :stroke-color="getProgressColor(monitor.memoryPercent)" />
-              <div class="monitor-value">{{ formatBytes(monitor.memoryUsed) }} / {{ formatBytes(monitor.memoryTotal) }}</div>
+              <a-progress :percent="parseFloat((monitor.memoryPercent || 0).toFixed(2))" :stroke-color="getProgressColor(monitor.memoryPercent)" />
+              <div class="monitor-value">{{ formatBytes(monitor.memoryUsed) }} / {{ formatBytes(monitor.memoryTotal) }} ({{ (monitor.memoryPercent || 0).toFixed(2) }}%)</div>
             </div>
             <div class="monitor-item">
               <div class="monitor-label">{{ $t('admin.diskUsage') }}</div>
-              <a-progress :percent="monitor.diskPercent || 0" :stroke-color="getProgressColor(monitor.diskPercent)" />
-              <div class="monitor-value">{{ formatBytes(monitor.diskUsed) }} / {{ formatBytes(monitor.diskTotal) }}</div>
+              <a-progress :percent="parseFloat((monitor.diskPercent || 0).toFixed(2))" :stroke-color="getProgressColor(monitor.diskPercent)" />
+              <div class="monitor-value">{{ formatBytes(monitor.diskUsed) }} / {{ formatBytes(monitor.diskTotal) }} ({{ (monitor.diskPercent || 0).toFixed(2) }}%)</div>
             </div>
             <div class="monitor-item">
               <div class="monitor-label">{{ $t('admin.networkUsage') }}</div>
