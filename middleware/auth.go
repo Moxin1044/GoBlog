@@ -24,7 +24,7 @@ func CORS() gin.HandlerFunc {
 	}
 }
 
-// JWT用户认证中间件
+// JWT用户认证中间件（同时支持user和admin token）
 func UserAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := extractToken(c)
@@ -39,14 +39,23 @@ func UserAuth() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		if claims.Type != "user" {
+		// 同时接受 user 和 admin token
+		if claims.Type == "user" {
+			c.Set("user_id", claims.UserID)
+			c.Set("username", claims.Username)
+			c.Set("role", claims.Role)
+		} else if claims.Type == "admin" {
+			c.Set("user_id", claims.UserID)
+			c.Set("username", claims.Username)
+			c.Set("role", "admin")
+			c.Set("admin_id", claims.UserID)
+			c.Set("admin_name", claims.Username)
+			c.Set("admin_role", claims.Role)
+		} else {
 			utils.ResponseError(c, http.StatusUnauthorized, "无效的token类型")
 			c.Abort()
 			return
 		}
-		c.Set("user_id", claims.UserID)
-		c.Set("username", claims.Username)
-		c.Set("role", claims.Role)
 		c.Next()
 	}
 }

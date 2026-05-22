@@ -25,15 +25,22 @@
     <a-table :columns="columns" :data-source="models" :loading="loading" row-key="id">
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'provider'">
-          {{ providerText(record.provider) }}
+          <a-tag :color="providerColor(record.provider)">{{ providerText(record.provider) }}</a-tag>
+        </template>
+        <template v-if="column.key === 'models'">
+          <template v-if="parseModels(record.models).length">
+            <a-tag v-for="m in parseModels(record.models).slice(0, 5)" :key="m" size="small" class="model-tag">{{ m }}</a-tag>
+            <a-tag v-if="parseModels(record.models).length > 5" size="small">+{{ parseModels(record.models).length - 5 }}</a-tag>
+          </template>
+          <span v-else class="text-secondary">-</span>
         </template>
         <template v-if="column.key === 'status'">
-          <a-switch :checked="record.status === 'active'" @change="(v: boolean) => handleStatusChange(record.id, v)" />
+          <a-switch :checked="record.enabled" @change="(v: boolean) => handleStatusChange(record.id, v)" />
         </template>
         <template v-if="column.key === 'actions'">
           <a-space>
             <a-button type="link" size="small" @click="showModal(record)">{{ $t('common.edit') }}</a-button>
-            <a-popconfirm :title="`${$t('common.confirm')}${$t('common.delete')}?`" @confirm="handleDelete(record.id)">
+            <a-popconfirm :title="$t('common.deleteConfirm')" @confirm="handleDelete(record.id)">
               <a-button type="link" danger size="small">{{ $t('common.delete') }}</a-button>
             </a-popconfirm>
           </a-space>
@@ -46,64 +53,52 @@
       :title="editingModel ? $t('common.edit') : $t('common.create')"
       @ok="handleModalOk"
       :confirm-loading="modalLoading"
-      width="700px"
+      width="600px"
     >
       <a-form :model="formState" layout="vertical">
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item :label="$t('admin.modelName')" name="name" :rules="[{ required: true }]">
-              <a-input v-model:value="formState.name" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item :label="$t('admin.provider')" name="provider" :rules="[{ required: true }]">
-              <a-select v-model:value="formState.provider">
-                <a-select-option value="openai">OpenAI</a-select-option>
-                <a-select-option value="qwen">{{ $t('admin.qwen') }}</a-select-option>
-                <a-select-option value="spark">{{ $t('admin.spark') }}</a-select-option>
-                <a-select-option value="doubao">{{ $t('admin.doubao') }}</a-select-option>
-                <a-select-option value="local">{{ $t('admin.localModel') }}</a-select-option>
-                <a-select-option value="custom">{{ $t('admin.custom') }}</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-row :gutter="16">
-          <a-col :span="16">
-            <a-form-item label="API URL" name="api_url" :rules="[{ required: true }]">
-              <a-input v-model:value="formState.api_url" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="8">
-            <a-form-item :label="$t('admin.requestType')" name="request_type">
-              <a-select v-model:value="formState.request_type">
-                <a-select-option value="POST">POST</a-select-option>
-                <a-select-option value="GET">GET</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-        </a-row>
-        <a-form-item :label="$t('user.apiToken')" name="api_token">
-          <a-input-password v-model:value="formState.api_token" />
+        <a-form-item :label="$t('admin.providerName')" name="name" :rules="[{ required: true }]">
+          <a-input v-model:value="formState.name" :placeholder="$t('admin.providerNamePlaceholder')" />
         </a-form-item>
-        <a-form-item :label="$t('admin.requestHeaders')" name="request_headers">
-          <a-textarea v-model:value="formState.request_headers" :rows="3" placeholder='{"Content-Type": "application/json"}' />
+        <a-form-item :label="$t('admin.provider')" name="provider" :rules="[{ required: true }]">
+          <a-select v-model:value="formState.provider" :placeholder="$t('admin.selectProvider')">
+            <a-select-option value="openai">OpenAI</a-select-option>
+            <a-select-option value="qwen">{{ $t('admin.qwen') }}</a-select-option>
+            <a-select-option value="spark">{{ $t('admin.spark') }}</a-select-option>
+            <a-select-option value="doubao">{{ $t('admin.doubao') }}</a-select-option>
+            <a-select-option value="deepseek">DeepSeek</a-select-option>
+            <a-select-option value="local">{{ $t('admin.localModel') }}</a-select-option>
+            <a-select-option value="custom">{{ $t('admin.custom') }}</a-select-option>
+          </a-select>
         </a-form-item>
-        <a-form-item :label="$t('admin.requestTemplate')" name="request_template">
-          <a-textarea v-model:value="formState.request_template" :rows="4" :placeholder='$t("admin.requestTemplatePlaceholder")' />
+        <a-form-item label="API URL" name="api_url" :rules="[{ required: true }]">
+          <a-input v-model:value="formState.api_url" placeholder="https://api.example.com/v1" />
         </a-form-item>
-        <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item :label="$t('ai.contextLength')" name="max_context">
-              <a-input-number v-model:value="formState.max_context" :min="1" :max="128" style="width: 100%" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item :label="$t('user.temperature')" name="temperature">
-              <a-slider v-model:value="formState.temperature" :min="0" :max="2" :step="0.1" />
-            </a-form-item>
-          </a-col>
-        </a-row>
+        <a-form-item :label="$t('admin.modelTags')" name="models">
+          <div class="model-tags-editor">
+            <div class="tags-display mb-8">
+              <a-tag
+                v-for="(tag, index) in modelTags"
+                :key="index"
+                closable
+                @close="removeModelTag(index)"
+                color="blue"
+              >
+                {{ tag }}
+              </a-tag>
+            </div>
+            <div class="tag-input-row">
+              <a-input
+                v-model:value="newModelTag"
+                :placeholder="$t('admin.modelTagPlaceholder')"
+                @pressEnter="addModelTag"
+                style="flex: 1"
+              />
+              <a-button type="primary" size="small" @click="addModelTag" style="margin-left: 8px;">
+                {{ $t('common.create') }}
+              </a-button>
+            </div>
+          </div>
+        </a-form-item>
       </a-form>
     </a-modal>
   </div>
@@ -122,6 +117,8 @@ const loading = ref(false)
 const modalVisible = ref(false)
 const modalLoading = ref(false)
 const editingModel = ref<any>(null)
+const modelTags = ref<string[]>([])
+const newModelTag = ref('')
 
 const globalConfig = reactive({
   ai_enabled: true,
@@ -132,12 +129,7 @@ const formState = reactive({
   name: '',
   provider: 'openai',
   api_url: '',
-  api_token: '',
-  request_type: 'POST',
-  request_headers: '',
-  request_template: '',
-  temperature: 0.7,
-  max_context: 10,
+  models: '',
 })
 
 const providerMap: Record<string, string> = {
@@ -145,19 +137,59 @@ const providerMap: Record<string, string> = {
   qwen: t('admin.qwen'),
   spark: t('admin.spark'),
   doubao: t('admin.doubao'),
+  deepseek: 'DeepSeek',
   local: t('admin.localModel'),
   custom: t('admin.custom'),
+}
+
+const providerColorMap: Record<string, string> = {
+  openai: 'green',
+  qwen: 'blue',
+  spark: 'purple',
+  doubao: 'orange',
+  deepseek: 'cyan',
+  local: 'default',
+  custom: 'default',
 }
 
 function providerText(provider: string) {
   return providerMap[provider] || provider
 }
 
+function providerColor(provider: string) {
+  return providerColorMap[provider] || 'default'
+}
+
+function parseModels(modelsStr: string): string[] {
+  if (!modelsStr) return []
+  try {
+    return JSON.parse(modelsStr)
+  } catch {
+    return []
+  }
+}
+
+function addModelTag() {
+  const tag = newModelTag.value.trim()
+  if (!tag) return
+  if (modelTags.value.includes(tag)) {
+    message.warning(t('admin.modelTagExists'))
+    return
+  }
+  modelTags.value.push(tag)
+  newModelTag.value = ''
+}
+
+function removeModelTag(index: number) {
+  modelTags.value.splice(index, 1)
+}
+
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-  { title: t('admin.modelName'), dataIndex: 'name', key: 'name', width: 150 },
+  { title: t('admin.providerName'), dataIndex: 'name', key: 'name', width: 150 },
   { title: t('admin.provider'), key: 'provider', width: 120 },
   { title: 'API URL', dataIndex: 'api_url', key: 'api_url', ellipsis: true },
+  { title: t('admin.modelTags'), key: 'models', width: 250 },
   { title: t('common.status'), key: 'status', width: 100 },
   { title: t('common.actions'), key: 'actions', width: 150 },
 ]
@@ -167,7 +199,7 @@ async function fetchModels() {
   try {
     const res = await getAIModelList()
     const data = res.data || {}
-    models.value = data.list || data || []
+    models.value = Array.isArray(data) ? data : (data.list || [])
     if (data.global_config) {
       globalConfig.ai_enabled = data.global_config.ai_enabled ?? true
       globalConfig.daily_chat_limit = data.global_config.daily_chat_limit ?? 10
@@ -180,34 +212,42 @@ async function fetchModels() {
 function showModal(record?: any) {
   editingModel.value = record || null
   if (record) {
-    Object.assign(formState, {
-      name: record.name,
-      provider: record.provider || 'openai',
-      api_url: record.api_url,
-      api_token: record.api_token || '',
-      request_type: record.request_type || 'POST',
-      request_headers: record.request_headers || '',
-      request_template: record.request_template || '',
-      temperature: record.temperature ?? 0.7,
-      max_context: record.max_context ?? 10,
-    })
+    formState.name = record.name
+    formState.provider = record.provider || 'openai'
+    formState.api_url = record.api_url
+    formState.models = record.models || ''
+    modelTags.value = parseModels(record.models || '')
   } else {
-    Object.assign(formState, {
-      name: '', provider: 'openai', api_url: '', api_token: '',
-      request_type: 'POST', request_headers: '', request_template: '',
-      temperature: 0.7, max_context: 10,
-    })
+    formState.name = ''
+    formState.provider = 'openai'
+    formState.api_url = ''
+    formState.models = ''
+    modelTags.value = []
   }
+  newModelTag.value = ''
   modalVisible.value = true
 }
 
 async function handleModalOk() {
+  if (!formState.name) {
+    message.warning(t('admin.providerNameRequired'))
+    return
+  }
+  if (!formState.api_url) {
+    message.warning(t('admin.apiUrlRequired'))
+    return
+  }
+
   modalLoading.value = true
   try {
+    const data = {
+      ...formState,
+      models: JSON.stringify(modelTags.value),
+    }
     if (editingModel.value) {
-      await updateAIModel(editingModel.value.id, formState)
+      await updateAIModel(editingModel.value.id, data)
     } else {
-      await createAIModel(formState)
+      await createAIModel(data)
     }
     message.success(t('common.success'))
     modalVisible.value = false
@@ -217,9 +257,9 @@ async function handleModalOk() {
   }
 }
 
-async function handleStatusChange(id: number, active: boolean) {
+async function handleStatusChange(id: number, enabled: boolean) {
   try {
-    await updateAIModelStatus(id, { status: active ? 'active' : 'disabled' })
+    await updateAIModelStatus(id, { enabled })
     message.success(t('common.success'))
     fetchModels()
   } catch { /* handled */ }
@@ -255,5 +295,27 @@ onMounted(() => {
 
 .ml-8 {
   margin-left: 8px;
+}
+
+.model-tags-editor {
+  .tags-display {
+    min-height: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .tag-input-row {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.model-tag {
+  font-size: 12px;
+}
+
+.text-secondary {
+  color: var(--text-secondary, #999);
 }
 </style>

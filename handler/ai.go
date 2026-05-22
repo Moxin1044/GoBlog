@@ -44,6 +44,7 @@ func UpdateAIConfig(c *gin.Context) {
 		APIToken    string  `json:"api_token"`
 		APIUrl      string  `json:"api_url"`
 		ModelID     uint    `json:"model_id"`
+		ModelName   string  `json:"model_name"`
 		Temperature float64 `json:"temperature"`
 		MaxContext  int     `json:"max_context"`
 	}
@@ -61,6 +62,7 @@ func UpdateAIConfig(c *gin.Context) {
 			APIToken:    req.APIToken,
 			APIUrl:      req.APIUrl,
 			ModelID:     req.ModelID,
+			ModelName:   req.ModelName,
 			Temperature: req.Temperature,
 			MaxContext:  req.MaxContext,
 		}
@@ -74,6 +76,7 @@ func UpdateAIConfig(c *gin.Context) {
 			"api_token":   req.APIToken,
 			"api_url":     req.APIUrl,
 			"model_id":    req.ModelID,
+			"model_name":  req.ModelName,
 			"temperature": req.Temperature,
 			"max_context": req.MaxContext,
 		})
@@ -168,8 +171,8 @@ func Chat(c *gin.Context) {
 	}
 
 	apiToken := aiConfig.APIToken
-	modelName := ""
-	if aiConfig.Model.ID > 0 {
+	modelName := aiConfig.ModelName
+	if modelName == "" && aiConfig.Model.ID > 0 {
 		modelName = aiConfig.Model.Name
 	}
 

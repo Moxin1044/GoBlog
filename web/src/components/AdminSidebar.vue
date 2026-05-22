@@ -36,6 +36,10 @@
         <TagsOutlined />
         <span>{{ $t('admin.tagManage') }}</span>
       </a-menu-item>
+      <a-menu-item key="navigations">
+        <MenuOutlined />
+        <span>{{ $t('admin.navigationManage') }}</span>
+      </a-menu-item>
       <a-menu-item key="comments">
         <CommentOutlined />
         <span>{{ $t('admin.commentManage') }}</span>
@@ -76,6 +80,7 @@ import {
   FileTextOutlined,
   FolderOutlined,
   TagsOutlined,
+  MenuOutlined,
   CommentOutlined,
   UserOutlined,
   TeamOutlined,
@@ -110,6 +115,7 @@ const selectedKeys = computed(() => {
   if (path.includes('article')) return ['articles']
   if (path.includes('categor')) return ['categories']
   if (path.includes('tag')) return ['tags']
+  if (path.includes('navig')) return ['navigations']
   if (path.includes('comment')) return ['comments']
   if (path.includes('user')) return ['users']
   if (path.includes('admin-mgmt') || path.includes('admins')) return ['admins']

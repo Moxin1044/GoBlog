@@ -82,11 +82,21 @@
         <!-- AI Config Tab -->
         <a-tab-pane key="ai" :tab="$t('user.aiConfig')">
           <a-form :model="aiForm" layout="vertical" @finish="handleUpdateAIConfig">
-            <a-form-item :label="$t('user.apiToken')" name="api_token">
-              <a-input-password v-model:value="aiForm.api_token" />
-            </a-form-item>
-            <a-form-item :label="$t('user.apiUrl')" name="api_url">
-              <a-input v-model:value="aiForm.api_url" placeholder="https://api.openai.com/v1" />
+            <a-form-item :label="$t('admin.provider')">
+              <a-select
+                v-model:value="aiForm.model_id"
+                :placeholder="$t('admin.selectProvider')"
+                allow-clear
+                show-search
+                :filter-option="filterProviderOption"
+                style="width: 100%"
+                @change="handleProviderChange"
+              >
+                <a-select-option v-for="m in availableModels" :key="m.id" :value="m.id" :label="m.name">
+                  <span>{{ m.name }}</span>
+                  <span class="provider-api-hint"> - {{ m.api_url }}</span>
+                </a-select-option>
+              </a-select>
             </a-form-item>
             <a-form-item :label="$t('user.model')">
               <div class="model-select-wrapper">
@@ -96,19 +106,24 @@
                 </a-radio-group>
                 <a-select
                   v-if="!isCustomModel"
-                  v-model:value="aiForm.model_id"
+                  v-model:value="aiForm.model_name"
                   :placeholder="$t('user.selectModel')"
                   allow-clear
                   show-search
-                  :filter-option="filterModelOption"
                   style="width: 100%"
                 >
-                  <a-select-option v-for="m in availableModels" :key="m.id" :value="m.id">
-                    {{ m.provider ? `[${m.provider}] ` : '' }}{{ m.name }}
+                  <a-select-option v-for="m in currentProviderModels" :key="m" :value="m">
+                    {{ m }}
                   </a-select-option>
                 </a-select>
-                <a-input v-else :placeholder="$t('user.model')" />
+                <a-input v-else v-model:value="aiForm.model_name" :placeholder="$t('user.model')" />
               </div>
+            </a-form-item>
+            <a-form-item :label="$t('user.apiToken')" name="api_token">
+              <a-input-password v-model:value="aiForm.api_token" />
+            </a-form-item>
+            <a-form-item :label="$t('user.apiUrl')" name="api_url">
+              <a-input v-model:value="aiForm.api_url" :placeholder="selectedProviderApiUrl || 'https://api.openai.com/v1'" />
             </a-form-item>
             <a-form-item :label="$t('user.temperature')" name="temperature">
               <div class="slider-wrapper">
@@ -130,7 +145,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
@@ -172,16 +187,41 @@ const subscriptionForm = reactive({
 const aiForm = reactive({
   api_token: '',
   api_url: '',
-  model_id: 0,
-  custom_model: '',
+  model_id: 0 as number | undefined,
+  model_name: '',
   temperature: 0.7,
   max_context: 10,
 })
 
 const isCustomModel = ref(false)
 
-function filterModelOption(input: string, option: any) {
+function filterProviderOption(input: string, option: any) {
   return option.label?.toLowerCase().includes(input.toLowerCase())
+}
+
+const currentProviderModels = computed(() => {
+  const provider = availableModels.value.find((m: any) => m.id === aiForm.model_id)
+  if (!provider?.models) return []
+  try {
+    return JSON.parse(provider.models)
+  } catch {
+    return []
+  }
+})
+
+const selectedProviderApiUrl = computed(() => {
+  const provider = availableModels.value.find((m: any) => m.id === aiForm.model_id)
+  return provider?.api_url || ''
+})
+
+function handleProviderChange(value: number | undefined) {
+  aiForm.model_name = ''
+  if (value) {
+    const provider = availableModels.value.find((m: any) => m.id === value)
+    if (provider?.api_url && !aiForm.api_url) {
+      aiForm.api_url = provider.api_url
+    }
+  }
 }
 
 async function fetchUserInfo() {
@@ -208,15 +248,14 @@ async function fetchAIConfig() {
     Object.assign(aiForm, {
       api_token: res.data?.api_token || '',
       api_url: res.data?.api_url || '',
-      model_id: res.data?.model_id || 0,
+      model_id: res.data?.model_id || undefined,
+      model_name: res.data?.model_name || '',
       temperature: res.data?.temperature || 0.7,
       max_context: res.data?.max_context || 10,
     })
-    // 如果有 model_id 且存在于 availableModels 中，则不是自定义模型
-    const hasSelectedModel = availableModels.value.some((m: any) => m.id === aiForm.model_id)
-    isCustomModel.value = !hasSelectedModel && !!res.data?.model_id
-    if (!isCustomModel.value && !hasSelectedModel) {
-      aiForm.model_id = 0
+    // 如果有 model_name 但不在提供商模型列表中，则是自定义模型
+    if (aiForm.model_name && currentProviderModels.value.length > 0) {
+      isCustomModel.value = !currentProviderModels.value.includes(aiForm.model_name)
     }
   } catch {
     // handled
@@ -303,7 +342,8 @@ async function handleUpdateAIConfig() {
     const submitData: any = {
       api_token: aiForm.api_token,
       api_url: aiForm.api_url,
-      model_id: isCustomModel.value ? 0 : aiForm.model_id,
+      model_id: aiForm.model_id || 0,
+      model_name: aiForm.model_name,
       temperature: aiForm.temperature,
       max_context: aiForm.max_context,
     }
@@ -379,5 +419,10 @@ onMounted(async () => {
 
 .category-checkbox-group {
   width: 100%;
+}
+
+.provider-api-hint {
+  color: var(--text-secondary, #999);
+  font-size: 12px;
 }
 </style>

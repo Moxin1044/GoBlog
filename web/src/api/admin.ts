@@ -26,6 +26,14 @@ export const createTag = (data: Record<string, any>) => request.post('/admin/tag
 export const updateTag = (id: number, data: Record<string, any>) => request.put(`/admin/tag/${id}`, data)
 export const deleteTag = (id: number) => request.delete(`/admin/tag/${id}`)
 
+// 导航管理
+export const adminGetNavigations = () => request.get('/admin/navigation/list')
+export const getNavigation = (id: number) => request.get(`/admin/navigation/${id}`)
+export const createNavigation = (data: Record<string, any>) => request.post('/admin/navigation', data)
+export const updateNavigation = (id: number, data: Record<string, any>) => request.put(`/admin/navigation/${id}`, data)
+export const deleteNavigation = (id: number) => request.delete(`/admin/navigation/${id}`)
+export const updateNavigationSort = (data: Record<string, any>[]) => request.put('/admin/navigation/sort', data)
+
 // 评论管理
 export const adminGetComments = (params: Record<string, any>) => request.get('/admin/comment/list', { params })
 export const reviewComment = (id: number, data: Record<string, any>) => request.put(`/admin/comment/${id}/review`, data)

@@ -12,15 +12,36 @@ import (
 	"github.com/moxin/GoBlog/utils"
 )
 
-// GetUserInfo 获取用户信息
+// GetUserInfo 获取用户信息（支持普通用户和管理员）
 func GetUserInfo(c *gin.Context) {
 	userID := c.GetUint("user_id")
+
+	// 先尝试从 users 表查找
 	var user model.User
-	if err := database.DB.First(&user, userID).Error; err != nil {
-		responseErrorWithCode(c, http.StatusNotFound, "用户不存在")
+	if err := database.DB.First(&user, userID).Error; err == nil {
+		responseSuccess(c, user)
 		return
 	}
-	responseSuccess(c, user)
+
+	// 如果是管理员，从 admins 表查找
+	adminID, exists := c.Get("admin_id")
+	if exists {
+		var admin model.Admin
+		if err := database.DB.First(&admin, adminID).Error; err == nil {
+			responseSuccess(c, gin.H{
+				"id":         admin.ID,
+				"username":   admin.Username,
+				"email":      admin.Email,
+				"nickname":   admin.Username,
+				"avatar":     "",
+				"role":       admin.Role,
+				"is_admin":   true,
+			})
+			return
+		}
+	}
+
+	responseErrorWithCode(c, http.StatusNotFound, "用户不存在")
 }
 
 // UpdateUserInfo 更新用户信息（昵称、邮箱）

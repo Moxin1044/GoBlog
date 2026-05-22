@@ -35,6 +35,8 @@ func SetupRouter(r *gin.Engine) {
 		// 分类标签
 		api.GET("/categories", handler.GetCategories)
 		api.GET("/tags", handler.GetTags)
+		// 导航菜单（公开）
+		api.GET("/navigations", handler.GetNavigationList)
 
 		// RSS
 		api.GET("/rss", handler.GetRSS)
@@ -98,6 +100,17 @@ func SetupRouter(r *gin.Engine) {
 				tagAdmin.POST("", handler.CreateTag)
 				tagAdmin.PUT("/:id", handler.UpdateTag)
 				tagAdmin.DELETE("/:id", handler.DeleteTag)
+			}
+
+			// 导航管理
+			navigationAdmin := admin.Group("/navigation")
+			{
+				navigationAdmin.GET("/list", handler.AdminGetNavigationList)
+				navigationAdmin.GET("/:id", handler.GetNavigation)
+				navigationAdmin.POST("", handler.CreateNavigation)
+				navigationAdmin.PUT("/:id", handler.UpdateNavigation)
+				navigationAdmin.DELETE("/:id", handler.DeleteNavigation)
+				navigationAdmin.PUT("/sort", handler.UpdateNavigationSort)
 			}
 
 			// 评论管理

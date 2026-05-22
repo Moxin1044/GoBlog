@@ -12,6 +12,8 @@
       :data-source="categories"
       :loading="loading"
       row-key="id"
+      :scroll="{ x: 600 }"
+      :pagination="false"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'actions'">
@@ -38,7 +40,7 @@
           <a-input v-model:value="formState.name" />
         </a-form-item>
         <a-form-item :label="$t('category.nameEn')">
-          <a-input v-model:value="formState.nameEn" />
+          <a-input v-model:value="formState.name_en" />
         </a-form-item>
         <a-form-item :label="$t('category.sort')">
           <a-input-number v-model:value="formState.sort" :min="0" style="width: 100%" />
@@ -64,7 +66,7 @@ const editingId = ref<number | null>(null)
 
 const formState = reactive({
   name: '',
-  nameEn: '',
+  name_en: '',
   sort: 0,
 })
 
@@ -91,7 +93,7 @@ function showCreateModal() {
   isEdit.value = false
   editingId.value = null
   formState.name = ''
-  formState.nameEn = ''
+  formState.name_en = ''
   formState.sort = 0
   modalVisible.value = true
 }
@@ -100,7 +102,7 @@ function showEditModal(record: any) {
   isEdit.value = true
   editingId.value = record.id
   formState.name = record.name
-  formState.nameEn = record.name_en || ''
+  formState.name_en = record.name_en || ''
   formState.sort = record.sort || 0
   modalVisible.value = true
 }

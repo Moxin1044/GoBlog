@@ -14,8 +14,17 @@
           @click="handleMenuClick"
         >
           <a-menu-item key="home">{{ $t('nav.home') }}</a-menu-item>
-          <a-menu-item key="categories">{{ $t('nav.categories') }}</a-menu-item>
-          <a-menu-item key="tags">{{ $t('nav.tags') }}</a-menu-item>
+          <template v-for="nav in navigations" :key="nav.id">
+            <a-sub-menu v-if="nav.children && nav.children.length > 0" :key="nav.id">
+              <template #title>{{ getNavName(nav) }}</template>
+              <a-menu-item v-for="child in nav.children" :key="child.id" @click="handleNavClick(child)">
+                {{ getNavName(child) }}
+              </a-menu-item>
+            </a-sub-menu>
+            <a-menu-item v-else :key="nav.id" @click="handleNavClick(nav)">
+              {{ getNavName(nav) }}
+            </a-menu-item>
+          </template>
         </a-menu>
       </div>
       <div class="header-right">
@@ -80,15 +89,22 @@
       :width="280"
     >
       <a-menu mode="vertical" :selected-keys="selectedKeys" @click="handleMobileMenuClick">
-        <a-menu-item key="home">
+        <a-menu-item key="home" @click="router.push('/')">
           <HomeOutlined /> {{ $t('nav.home') }}
         </a-menu-item>
-        <a-menu-item key="categories">
-          <AppstoreOutlined /> {{ $t('nav.categories') }}
-        </a-menu-item>
-        <a-menu-item key="tags">
-          <TagsOutlined /> {{ $t('nav.tags') }}
-        </a-menu-item>
+        <template v-for="nav in navigations" :key="nav.id">
+          <a-sub-menu v-if="nav.children && nav.children.length > 0" :key="nav.id">
+            <template #title>
+              <AppstoreOutlined /> {{ getNavName(nav) }}
+            </template>
+            <a-menu-item v-for="child in nav.children" :key="child.id" @click="handleNavClick(child)">
+              {{ getNavName(child) }}
+            </a-menu-item>
+          </a-sub-menu>
+          <a-menu-item v-else :key="nav.id" @click="handleNavClick(nav)">
+            <AppstoreOutlined /> {{ getNavName(nav) }}
+          </a-menu-item>
+        </template>
       </a-menu>
       <div class="mobile-search">
         <a-input-search
@@ -103,7 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -113,6 +129,7 @@ import {
 import { useUserStore } from '@/stores/user'
 import { useAppStore } from '@/stores/app'
 import ThemeToggle from './ThemeToggle.vue'
+import { getNavigations } from '@/api/article'
 
 const router = useRouter()
 const route = useRoute()
@@ -122,11 +139,10 @@ const appStore = useAppStore()
 
 const searchText = ref('')
 const mobileMenuVisible = ref(false)
+const navigations = ref<any[]>([])
 
 const selectedKeys = computed(() => {
   if (route.path === '/') return ['home']
-  if (route.path.includes('categor')) return ['categories']
-  if (route.path.includes('tag')) return ['tags']
   return []
 })
 
@@ -136,10 +152,50 @@ const userAvatar = computed(() => {
   return '' // Could be extended to read from user store
 })
 
+const getNavName = (nav: any) => {
+  if (locale.value === 'en-US' && nav.name_en) {
+    return nav.name_en
+  }
+  return nav.name
+}
+
+const fetchNavigations = async () => {
+  try {
+    const res = await getNavigations()
+    navigations.value = res.data || []
+  } catch {
+    // Ignore error
+  }
+}
+
+function handleNavClick(nav: any) {
+  if (nav.type === 'category' && nav.category_id) {
+    router.push(`/category/${nav.category_id}`)
+  } else if (nav.type === 'link' && nav.link) {
+    if (nav.new_tab) {
+      window.open(nav.link, '_blank')
+    } else {
+      window.location.href = nav.link
+    }
+  } else {
+    // Custom type, treat as custom link or internal link
+    if (nav.link) {
+      if (nav.new_tab) {
+        window.open(nav.link, '_blank')
+      } else {
+        if (nav.link.startsWith('http')) {
+          window.location.href = nav.link
+        } else {
+          router.push(nav.link)
+        }
+      }
+    }
+  }
+  mobileMenuVisible.value = false
+}
+
 function handleMenuClick({ key }: { key: string }) {
   if (key === 'home') router.push('/')
-  else if (key === 'categories') router.push('/?tab=categories')
-  else if (key === 'tags') router.push('/?tab=tags')
 }
 
 function handleMobileMenuClick({ key }: { key: string }) {
@@ -163,6 +219,10 @@ function handleLogout() {
   userStore.logout()
   router.push('/')
 }
+
+onMounted(() => {
+  fetchNavigations()
+})
 </script>
 
 <style scoped lang="less">

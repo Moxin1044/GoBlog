@@ -12,6 +12,8 @@
       :data-source="tags"
       :loading="loading"
       row-key="id"
+      :scroll="{ x: 500 }"
+      :pagination="false"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'actions'">
@@ -38,7 +40,7 @@
           <a-input v-model:value="formState.name" />
         </a-form-item>
         <a-form-item :label="$t('tag.nameEn')">
-          <a-input v-model:value="formState.nameEn" />
+          <a-input v-model:value="formState.name_en" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -61,7 +63,7 @@ const editingId = ref<number | null>(null)
 
 const formState = reactive({
   name: '',
-  nameEn: '',
+  name_en: '',
 })
 
 const columns = [
@@ -86,7 +88,7 @@ function showCreateModal() {
   isEdit.value = false
   editingId.value = null
   formState.name = ''
-  formState.nameEn = ''
+  formState.name_en = ''
   modalVisible.value = true
 }
 
@@ -94,7 +96,7 @@ function showEditModal(record: any) {
   isEdit.value = true
   editingId.value = record.id
   formState.name = record.name
-  formState.nameEn = record.name_en || ''
+  formState.name_en = record.name_en || ''
   modalVisible.value = true
 }
 

@@ -177,7 +177,7 @@ async function fetchFeatured() {
 async function fetchCategories() {
   try {
     const res = await getCategories()
-    categories.value = res.data?.list || []
+    categories.value = Array.isArray(res.data) ? res.data : (res.data?.list || [])
   } catch {
     // silently fail
   }
@@ -186,7 +186,7 @@ async function fetchCategories() {
 async function fetchTags() {
   try {
     const res = await getTags()
-    tags.value = res.data?.list || []
+    tags.value = Array.isArray(res.data) ? res.data : (res.data?.list || [])
   } catch {
     // silently fail
   }

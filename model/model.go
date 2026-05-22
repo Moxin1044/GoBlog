@@ -116,20 +116,17 @@ type SubscriptionCategory struct {
 	CategoryID     uint `gorm:"primaryKey" json:"category_id"`
 }
 
-// AIModel AI模型配置
+// AIModel AI模型提供商
 type AIModel struct {
-	ID           uint      `gorm:"primaryKey" json:"id"`
-	Name         string    `gorm:"size:100;not null" json:"name"`
-	Provider     string    `gorm:"size:50" json:"provider"`
-	APIUrl       string    `gorm:"size:255" json:"api_url"`
-	APIType      string    `gorm:"size:10;default:POST" json:"api_type"` // GET/POST
-	Headers      string    `gorm:"type:json" json:"headers"`
-	BodyTemplate string    `gorm:"type:json" json:"body_template"`
-	MaxContext   int       `gorm:"default:10" json:"max_context"`
-	Temperature  float64   `gorm:"type:decimal(3,2);default:0.70" json:"temperature"`
-	Enabled      bool      `gorm:"default:true" json:"enabled"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID        uint           `gorm:"primaryKey" json:"id"`
+	Name      string         `gorm:"size:100;not null" json:"name"` // 提供商名称
+	Provider  string         `gorm:"size:50" json:"provider"`       // 提供商标识(openai/qwen/spark/doubao/local/custom)
+	APIUrl    string         `gorm:"size:255" json:"api_url"`       // 提供商API网站
+	Models    string         `gorm:"type:text" json:"models"`       // 可选模型列表(JSON数组字符串)
+	Enabled   bool           `gorm:"default:true" json:"enabled"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 // UserAIConfig 用户AI配置
@@ -139,6 +136,7 @@ type UserAIConfig struct {
 	APIToken    string    `gorm:"size:500" json:"api_token"`
 	APIUrl      string    `gorm:"size:255" json:"api_url"`
 	ModelID     uint      `gorm:"index" json:"model_id"`
+	ModelName   string    `gorm:"size:100" json:"model_name"` // 用户选择的模型名称
 	Temperature float64   `gorm:"type:decimal(3,2);default:0.70" json:"temperature"`
 	MaxContext  int       `gorm:"default:10" json:"max_context"`
 	CreatedAt   time.Time `json:"created_at"`
@@ -222,6 +220,26 @@ type Backup struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
+// Navigation 导航菜单模型
+type Navigation struct {
+	ID         uint           `gorm:"primaryKey" json:"id"`
+	Name       string         `gorm:"size:100;not null" json:"name"`
+	NameEn     string         `gorm:"size:100" json:"name_en"`
+	ParentID   uint           `gorm:"index;default:0" json:"parent_id"`
+	Type       string         `gorm:"size:20;default:custom" json:"type"` // custom/category/link
+	Link       string         `gorm:"size:255" json:"link"`
+	CategoryID uint           `gorm:"index" json:"category_id"`
+	NewTab     bool           `gorm:"default:false" json:"new_tab"`
+	Sort       int            `gorm:"default:0" json:"sort"`
+	Enabled    bool           `gorm:"default:true" json:"enabled"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
+
+	Children []Navigation `gorm:"foreignKey:ParentID;references:ID" json:"children,omitempty"`
+	Category *Category    `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
+}
+
 // AutoMigrate 自动迁移数据库表结构
 func AutoMigrate(db *gorm.DB) error {
 	return db.AutoMigrate(
@@ -229,6 +247,6 @@ func AutoMigrate(db *gorm.DB) error {
 		&Comment{}, &Like{}, &Subscription{}, &SubscriptionCategory{},
 		&AIModel{}, &UserAIConfig{}, &ChatMessage{}, &SiteConfig{},
 		&Admin{}, &OperationLog{}, &VerificationCode{}, &VisitLog{},
-		&Backup{},
+		&Backup{}, &Navigation{},
 	)
 }

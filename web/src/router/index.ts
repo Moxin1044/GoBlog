@@ -10,6 +10,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', name: 'Home', component: () => import('@/views/front/Home.vue') },
       { path: 'article/:id', name: 'ArticleDetail', component: () => import('@/views/front/ArticleDetail.vue') },
+      { path: 'category/:id', name: 'CategoryPage', component: () => import('@/views/front/CategoryPage.vue') },
       { path: 'login', name: 'Login', component: () => import('@/views/front/Login.vue') },
       { path: 'register', name: 'Register', component: () => import('@/views/front/Register.vue') },
       { path: 'profile', name: 'Profile', component: () => import('@/views/front/Profile.vue'), meta: { requiresAuth: true } },
@@ -26,6 +27,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'article/edit/:id', name: 'ArticleEdit', component: () => import('@/views/admin/ArticleEdit.vue') },
       { path: 'categories', name: 'CategoryManage', component: () => import('@/views/admin/CategoryManage.vue') },
       { path: 'tags', name: 'TagManage', component: () => import('@/views/admin/TagManage.vue') },
+      { path: 'navigations', name: 'NavigationManage', component: () => import('@/views/admin/NavigationManage.vue') },
       { path: 'comments', name: 'CommentManage', component: () => import('@/views/admin/CommentManage.vue') },
       { path: 'users', name: 'UserManage', component: () => import('@/views/admin/UserManage.vue') },
       { path: 'admins', name: 'AdminManage', component: () => import('@/views/admin/AdminManage.vue'), meta: { superAdmin: true } },
