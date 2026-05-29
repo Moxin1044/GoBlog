@@ -31,24 +31,18 @@
       row-key="id"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'avatar'">
-          <a-avatar :src="record.avatar">{{ record.nickname?.charAt(0) || 'U' }}</a-avatar>
-        </template>
         <template v-if="column.key === 'status'">
           <a-switch :checked="record.status === 'active'" @change="(v: boolean) => handleStatusChange(record.id, v)" />
         </template>
         <template v-if="column.key === 'actions'">
           <a-space>
             <a-button type="link" size="small" @click="showDetail(record)">{{ $t('admin.viewDetail') }}</a-button>
-            <a-popconfirm :title="$t('admin.confirmResetPwd')" @confirm="handleResetPassword(record.id)">
-              <a-button type="link" size="small">{{ $t('admin.resetPassword') }}</a-button>
-            </a-popconfirm>
+            <a-button type="link" size="small" @click="showResetPwdModal(record.id)">{{ $t('admin.resetPassword') }}</a-button>
           </a-space>
         </template>
       </template>
     </a-table>
 
-    <!-- User Detail Modal -->
     <a-modal
       v-model:open="detailVisible"
       :title="$t('admin.userDetail')"
@@ -69,7 +63,6 @@
       </a-descriptions>
     </a-modal>
 
-    <!-- Create User Modal -->
     <a-modal
       v-model:open="createVisible"
       :title="$t('admin.addUser')"
@@ -94,6 +87,19 @@
         </a-form-item>
       </a-form>
     </a-modal>
+
+    <a-modal
+      v-model:open="resetPwdVisible"
+      :title="$t('admin.resetPassword')"
+      @ok="handleResetPassword"
+      :confirm-loading="resetPwdLoading"
+    >
+      <a-form layout="vertical">
+        <a-form-item :label="$t('auth.newPassword')" required>
+          <a-input-password v-model:value="resetPwdForm.new_password" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -112,6 +118,10 @@ const detailVisible = ref(false)
 const detailUser = ref<any>(null)
 const createVisible = ref(false)
 const createLoading = ref(false)
+const resetPwdVisible = ref(false)
+const resetPwdLoading = ref(false)
+const resetPwdUserId = ref(0)
+const resetPwdForm = reactive({ new_password: '' })
 
 const createForm = reactive({
   username: '',
@@ -198,18 +208,32 @@ async function showDetail(record: any) {
   }
 }
 
+function showResetPwdModal(id: number) {
+  resetPwdUserId.value = id
+  resetPwdForm.new_password = ''
+  resetPwdVisible.value = true
+}
+
+async function handleResetPassword() {
+  if (!resetPwdForm.new_password || resetPwdForm.new_password.length < 6) {
+    message.warning(t('auth.passwordMin'))
+    return
+  }
+  resetPwdLoading.value = true
+  try {
+    await resetUserPassword(resetPwdUserId.value, { new_password: resetPwdForm.new_password })
+    message.success(t('admin.passwordResetSuccess'))
+    resetPwdVisible.value = false
+  } catch { /* handled */ } finally {
+    resetPwdLoading.value = false
+  }
+}
+
 async function handleStatusChange(id: number, active: boolean) {
   try {
     await updateUserStatus(id, { status: active ? 'active' : 'disabled' })
     message.success(t('common.success'))
     fetchUsers()
-  } catch { /* handled */ }
-}
-
-async function handleResetPassword(id: number) {
-  try {
-    await resetUserPassword(id)
-    message.success(t('admin.passwordResetSuccess'))
   } catch { /* handled */ }
 }
 

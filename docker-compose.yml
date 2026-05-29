@@ -42,19 +42,6 @@ services:
     networks:
       - goblog-network
 
-  frontend:
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-    container_name: goblog-frontend
-    restart: always
-    ports:
-      - "3000:80"
-    depends_on:
-      - goblog
-    networks:
-      - goblog-network
-
 volumes:
   mysql_data:
   upload_data:

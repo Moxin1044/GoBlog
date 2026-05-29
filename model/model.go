@@ -225,7 +225,7 @@ type Navigation struct {
 	ID         uint           `gorm:"primaryKey" json:"id"`
 	Name       string         `gorm:"size:100;not null" json:"name"`
 	NameEn     string         `gorm:"size:100" json:"name_en"`
-	ParentID   uint           `gorm:"index;default:0" json:"parent_id"`
+	ParentID   *uint          `gorm:"index;default:null" json:"parent_id"`
 	Type       string         `gorm:"size:20;default:custom" json:"type"` // custom/category/link
 	Link       string         `gorm:"size:255" json:"link"`
 	CategoryID uint           `gorm:"index" json:"category_id"`

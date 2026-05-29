@@ -27,6 +27,7 @@ export default {
     createdAt: '创建时间',
     deleteConfirm: '确认删除？',
     disabled: '已禁用',
+    enabled: '已启用',
   },
   nav: {
     home: '首页',
@@ -73,6 +74,7 @@ export default {
     codeSent: '验证码已发送',
     codeSendFailed: '验证码发送失败',
     registerSuccess: '注册成功',
+    newPassword: '新密码',
   },
   article: {
     title: '标题',

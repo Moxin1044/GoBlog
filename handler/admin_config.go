@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -44,7 +45,13 @@ func UpdateSystemConfig(c *gin.Context) {
 
 	var req map[string]interface{}
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("UpdateSystemConfig bind error: %v", err)
 		responseError(c, "参数错误: "+err.Error())
+		return
+	}
+
+	if len(req) == 0 {
+		responseError(c, "参数不能为空")
 		return
 	}
 

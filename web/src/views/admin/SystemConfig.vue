@@ -135,9 +135,11 @@ async function fetchConfig() {
   try {
     const res = await getSystemConfig()
     const data = res.data || {}
-    // 处理 register_enabled 可能是字符串的情况
     if (data.register_enabled !== undefined) {
       data.register_enabled = data.register_enabled === 'true' || data.register_enabled === true
+    }
+    if (data.smtp_port !== undefined) {
+      data.smtp_port = Number(data.smtp_port) || 465
     }
     Object.assign(formState, data)
   } catch { /* handled */ } finally {

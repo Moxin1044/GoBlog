@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { ref, watch } from 'vue'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
@@ -36,7 +36,6 @@ const md = new MarkdownIt({
   },
 })
 
-// Add heading IDs for TOC
 let headingIndex = 0
 const tocItems: { id: string; text: string; level: number }[] = []
 
@@ -46,7 +45,6 @@ md.core.ruler.push('heading_ids', (state) => {
   for (const token of state.tokens) {
     if (token.type === 'heading_open') {
       const level = parseInt(token.tag.slice(1))
-      // Find the inline token after heading_open
       const inlineToken = state.tokens[state.tokens.indexOf(token) + 1]
       if (inlineToken && inlineToken.type === 'inline') {
         const text = inlineToken.content
@@ -58,11 +56,9 @@ md.core.ruler.push('heading_ids', (state) => {
   }
 })
 
-// Task list support
 md.core.ruler.push('task_lists', (state) => {
   for (const token of state.tokens) {
     if (token.type === 'inline') {
-      // Handle [ ] and [x] at the start of list items
       token.content = token.content.replace(/^\[(x|X| )\]\s*/, (match, check) => {
         return check.toLowerCase() === 'x' ? '✅ ' : '⬜ '
       })
@@ -70,14 +66,15 @@ md.core.ruler.push('task_lists', (state) => {
   }
 })
 
-const renderedHtml = computed(() => {
-  const result = md.render(props.content || '')
-  // Emit TOC items after render
+const renderedHtml = ref('')
+
+watch(() => props.content, (newContent) => {
+  const result = md.render(newContent || '')
+  renderedHtml.value = result
   if (tocItems.length) {
     emit('toc-generated', [...tocItems])
   }
-  return result
-})
+}, { immediate: true })
 </script>
 
 <style scoped lang="less">

@@ -18,7 +18,7 @@ func GetNavigationList(c *gin.Context) {
 		return
 	}
 
-	tree := buildNavigationTree(navigations, 0)
+	tree := buildNavigationTree(navigations, nil)
 	responseSuccess(c, tree)
 }
 
@@ -30,7 +30,7 @@ func AdminGetNavigationList(c *gin.Context) {
 		return
 	}
 
-	tree := buildNavigationTree(navigations, 0)
+	tree := buildNavigationTree(navigations, nil)
 	responseSuccess(c, tree)
 }
 
@@ -52,7 +52,7 @@ func CreateNavigation(c *gin.Context) {
 	var req struct {
 		Name       string `json:"name" binding:"required"`
 		NameEn     string `json:"name_en"`
-		ParentID   uint   `json:"parent_id"`
+		ParentID   *uint  `json:"parent_id"`
 		Type       string `json:"type"`
 		Link       string `json:"link"`
 		CategoryID uint   `json:"category_id"`
@@ -101,7 +101,7 @@ func UpdateNavigation(c *gin.Context) {
 	var req struct {
 		Name       string `json:"name"`
 		NameEn     string `json:"name_en"`
-		ParentID   uint   `json:"parent_id"`
+		ParentID   *uint  `json:"parent_id"`
 		Type       string `json:"type"`
 		Link       string `json:"link"`
 		CategoryID uint   `json:"category_id"`
@@ -184,14 +184,24 @@ func UpdateNavigationSort(c *gin.Context) {
 }
 
 // buildNavigationTree 构建导航树形结构
-func buildNavigationTree(navigations []model.Navigation, parentID uint) []model.Navigation {
+func buildNavigationTree(navigations []model.Navigation, parentID *uint) []model.Navigation {
 	var tree []model.Navigation
 	for _, nav := range navigations {
-		if nav.ParentID == parentID {
-			children := buildNavigationTree(navigations, nav.ID)
+		if equalParentID(nav.ParentID, parentID) {
+			children := buildNavigationTree(navigations, &nav.ID)
 			nav.Children = children
 			tree = append(tree, nav)
 		}
 	}
 	return tree
+}
+
+func equalParentID(a, b *uint) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return *a == *b
 }

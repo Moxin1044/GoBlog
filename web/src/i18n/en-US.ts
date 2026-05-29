@@ -27,6 +27,7 @@ export default {
     createdAt: 'Created At',
     deleteConfirm: 'Confirm delete?',
     disabled: 'Disabled',
+    enabled: 'Enabled',
   },
   nav: {
     home: 'Home',
@@ -73,6 +74,7 @@ export default {
     codeSent: 'Verification code sent',
     codeSendFailed: 'Failed to send verification code',
     registerSuccess: 'Registration successful',
+    newPassword: 'New Password',
   },
   article: {
     title: 'Title',

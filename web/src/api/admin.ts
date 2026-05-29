@@ -45,7 +45,7 @@ export const adminGetUsers = (params: Record<string, any>) => request.get('/admi
 export const adminCreateUser = (data: Record<string, any>) => request.post('/admin/user', data)
 export const adminGetUser = (id: number) => request.get(`/admin/user/${id}`)
 export const updateUserStatus = (id: number, data: Record<string, any>) => request.put(`/admin/user/${id}/status`, data)
-export const resetUserPassword = (id: number) => request.put(`/admin/user/${id}/reset-password`)
+export const resetUserPassword = (id: number, data: Record<string, any>) => request.put(`/admin/user/${id}/reset-password`, data)
 
 // 管理员管理
 export const getAdminList = () => request.get('/admin/admin-mgmt/list')
