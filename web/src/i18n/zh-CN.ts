@@ -246,6 +246,8 @@ export default {
     location: '位置',
     accessTime: '访问时间',
     device: '设备',
+    addUser: '添加用户',
+    fillRequired: '请填写必填项',
   },
   site: {
     siteName: '站点名称',

@@ -4,24 +4,74 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/smtp"
+	"strconv"
 	"strings"
 
 	"github.com/moxin/GoBlog/config"
+	"github.com/moxin/GoBlog/database"
+	"github.com/moxin/GoBlog/model"
 )
 
-func SendEmail(to, subject, body string) error {
-	cfg := config.AppConfig.SMTP
-	if cfg.Host == "" {
-		return fmt.Errorf("SMTP not configured")
+type SMTPConfig struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+	From     string
+}
+
+func getSMTPConfig() *SMTPConfig {
+	var configs []model.SiteConfig
+	database.DB.Where("`key` IN ?", []string{"smtp_host", "smtp_port", "smtp_user", "smtp_password", "smtp_sender"}).Find(&configs)
+
+	kv := make(map[string]string)
+	for _, c := range configs {
+		kv[c.Key] = c.Value
 	}
 
+	if kv["smtp_host"] != "" {
+		port, _ := strconv.Atoi(kv["smtp_port"])
+		if port == 0 {
+			port = 465
+		}
+		from := kv["smtp_sender"]
+		if from == "" {
+			from = kv["smtp_user"]
+		}
+		return &SMTPConfig{
+			Host:     kv["smtp_host"],
+			Port:     port,
+			User:     kv["smtp_user"],
+			Password: kv["smtp_password"],
+			From:     from,
+		}
+	}
+
+	cfg := config.AppConfig.SMTP
+	if cfg.Host == "" {
+		return nil
+	}
 	from := cfg.From
 	if from == "" {
 		from = cfg.User
 	}
+	return &SMTPConfig{
+		Host:     cfg.Host,
+		Port:     cfg.Port,
+		User:     cfg.User,
+		Password: cfg.Password,
+		From:     from,
+	}
+}
+
+func SendEmail(to, subject, body string) error {
+	cfg := getSMTPConfig()
+	if cfg == nil {
+		return fmt.Errorf("SMTP not configured")
+	}
 
 	msg := strings.Join([]string{
-		"From: " + from,
+		"From: " + cfg.From,
 		"To: " + to,
 		"Subject: " + subject,
 		"Content-Type: text/html; charset=UTF-8",
@@ -50,7 +100,7 @@ func SendEmail(to, subject, body string) error {
 		return err
 	}
 
-	if err = client.Mail(from); err != nil {
+	if err = client.Mail(cfg.From); err != nil {
 		return err
 	}
 

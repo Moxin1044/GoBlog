@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -41,14 +42,14 @@ func GetSystemConfig(c *gin.Context) {
 func UpdateSystemConfig(c *gin.Context) {
 	adminID := c.GetUint("admin_id")
 
-	var req map[string]string
+	var req map[string]interface{}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responseError(c, "参数错误: "+err.Error())
 		return
 	}
 
 	for key, value := range req {
-		setConfigValue(key, value)
+		setConfigValue(key, fmt.Sprintf("%v", value))
 	}
 
 	adminName, _ := c.Get("admin_name")

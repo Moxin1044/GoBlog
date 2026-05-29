@@ -246,6 +246,8 @@ export default {
     location: 'Location',
     accessTime: 'Access Time',
     device: 'Device',
+    addUser: 'Add User',
+    fillRequired: 'Please fill in required fields',
   },
   site: {
     siteName: 'Site Name',

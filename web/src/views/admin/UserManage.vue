@@ -2,6 +2,7 @@
   <div class="user-manage">
     <div class="page-header mb-16">
       <h2>{{ $t('admin.userManage') }}</h2>
+      <a-button type="primary" @click="showCreateModal">{{ $t('admin.addUser') }}</a-button>
     </div>
 
     <div class="filter-bar mb-16">
@@ -67,13 +68,39 @@
         <a-descriptions-item :label="$t('admin.registerTime')">{{ detailUser.created_at || '-' }}</a-descriptions-item>
       </a-descriptions>
     </a-modal>
+
+    <!-- Create User Modal -->
+    <a-modal
+      v-model:open="createVisible"
+      :title="$t('admin.addUser')"
+      @ok="handleCreateUser"
+      :confirm-loading="createLoading"
+    >
+      <a-form :model="createForm" layout="vertical">
+        <a-form-item :label="$t('auth.username')" required>
+          <a-input v-model:value="createForm.username" />
+        </a-form-item>
+        <a-form-item :label="$t('auth.email')" required>
+          <a-input v-model:value="createForm.email" />
+        </a-form-item>
+        <a-form-item :label="$t('auth.password')" required>
+          <a-input-password v-model:value="createForm.password" />
+        </a-form-item>
+        <a-form-item :label="$t('user.nickname')">
+          <a-input v-model:value="createForm.nickname" />
+        </a-form-item>
+        <a-form-item :label="$t('auth.phone')">
+          <a-input v-model:value="createForm.phone" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
-import { adminGetUsers, adminGetUser, updateUserStatus, resetUserPassword } from '@/api/admin'
+import { adminGetUsers, adminCreateUser, adminGetUser, updateUserStatus, resetUserPassword } from '@/api/admin'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -83,6 +110,16 @@ const usernameSearch = ref('')
 const emailSearch = ref('')
 const detailVisible = ref(false)
 const detailUser = ref<any>(null)
+const createVisible = ref(false)
+const createLoading = ref(false)
+
+const createForm = reactive({
+  username: '',
+  email: '',
+  password: '',
+  nickname: '',
+  phone: '',
+})
 
 const pagination = reactive({
   current: 1,
@@ -119,6 +156,35 @@ function handleTableChange(pag: any) {
   pagination.current = pag.current
   pagination.pageSize = pag.pageSize
   fetchUsers()
+}
+
+function showCreateModal() {
+  createForm.username = ''
+  createForm.email = ''
+  createForm.password = ''
+  createForm.nickname = ''
+  createForm.phone = ''
+  createVisible.value = true
+}
+
+async function handleCreateUser() {
+  if (!createForm.username || !createForm.email || !createForm.password) {
+    message.warning(t('admin.fillRequired'))
+    return
+  }
+  if (createForm.password.length < 6) {
+    message.warning(t('auth.passwordMin'))
+    return
+  }
+  createLoading.value = true
+  try {
+    await adminCreateUser(createForm)
+    message.success(t('common.success'))
+    createVisible.value = false
+    fetchUsers()
+  } catch { /* handled */ } finally {
+    createLoading.value = false
+  }
 }
 
 async function showDetail(record: any) {

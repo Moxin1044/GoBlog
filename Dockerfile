@@ -4,7 +4,7 @@ WORKDIR /app/web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci
 COPY web/ ./
-RUN npm run build
+RUN node node_modules/vite/bin/vite.js build
 
 # 阶段2: 构建后端
 FROM golang:1.23-alpine AS backend-builder

@@ -42,6 +42,7 @@ export const batchReviewComments = (data: Record<string, any>) => request.post('
 
 // 用户管理
 export const adminGetUsers = (params: Record<string, any>) => request.get('/admin/user/list', { params })
+export const adminCreateUser = (data: Record<string, any>) => request.post('/admin/user', data)
 export const adminGetUser = (id: number) => request.get(`/admin/user/${id}`)
 export const updateUserStatus = (id: number, data: Record<string, any>) => request.put(`/admin/user/${id}/status`, data)
 export const resetUserPassword = (id: number) => request.put(`/admin/user/${id}/reset-password`)

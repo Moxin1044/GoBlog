@@ -126,6 +126,7 @@ func SetupRouter(r *gin.Engine) {
 			userAdmin := admin.Group("/user")
 			{
 				userAdmin.GET("/list", handler.AdminGetUsers)
+				userAdmin.POST("", handler.AdminCreateUser)
 				userAdmin.GET("/:id", handler.AdminGetUser)
 				userAdmin.PUT("/:id/status", handler.UpdateUserStatus)
 				userAdmin.PUT("/:id/reset-password", handler.ResetUserPassword)

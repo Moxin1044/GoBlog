@@ -35,6 +35,66 @@ func AdminGetUsers(c *gin.Context) {
 	utils.ResponsePage(c, users, total, page, pageSize)
 }
 
+// AdminCreateUser 管理员创建用户
+func AdminCreateUser(c *gin.Context) {
+	adminID := c.GetUint("admin_id")
+
+	var req struct {
+		Username string `json:"username" binding:"required"`
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required,min=6"`
+		Nickname string `json:"nickname"`
+		Phone    string `json:"phone"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responseError(c, "参数错误: "+err.Error())
+		return
+	}
+
+	var count int64
+	database.DB.Model(&model.User{}).Where("username = ?", req.Username).Count(&count)
+	if count > 0 {
+		responseError(c, "用户名已存在")
+		return
+	}
+
+	database.DB.Model(&model.User{}).Where("email = ?", req.Email).Count(&count)
+	if count > 0 {
+		responseError(c, "邮箱已被注册")
+		return
+	}
+
+	hashedPassword, err := utils.HashPassword(req.Password)
+	if err != nil {
+		responseErrorWithCode(c, http.StatusInternalServerError, "密码加密失败")
+		return
+	}
+
+	nickname := req.Nickname
+	if nickname == "" {
+		nickname = req.Username
+	}
+
+	user := model.User{
+		Username: req.Username,
+		Email:    req.Email,
+		Password: hashedPassword,
+		Nickname: nickname,
+		Phone:    req.Phone,
+		Role:     "user",
+		Status:   "active",
+	}
+	if err := database.DB.Create(&user).Error; err != nil {
+		responseErrorWithCode(c, http.StatusInternalServerError, "创建用户失败")
+		return
+	}
+
+	adminName, _ := c.Get("admin_name")
+	recordOperationLog(adminID, adminName.(string), "创建用户", req.Username, "成功", utils.GetClientIP(c))
+
+	responseSuccess(c, gin.H{"id": user.ID})
+}
+
 // AdminGetUser 用户详情
 func AdminGetUser(c *gin.Context) {
 	id := c.Param("id")
