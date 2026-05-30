@@ -15,7 +15,7 @@
         >
           <a-menu-item key="home">{{ $t('nav.home') }}</a-menu-item>
           <template v-for="nav in flatNavigations" :key="nav.id">
-            <a-menu-item :key="nav.id" @click="handleNavClick(nav)">
+            <a-menu-item @click="handleNavClick(nav)">
               {{ getNavName(nav) }}
             </a-menu-item>
           </template>
@@ -87,7 +87,7 @@
           <HomeOutlined /> {{ $t('nav.home') }}
         </a-menu-item>
         <template v-for="nav in flatNavigations" :key="nav.id">
-          <a-menu-item :key="nav.id" @click="handleNavClick(nav)">
+          <a-menu-item @click="handleNavClick(nav)">
             <AppstoreOutlined /> {{ getNavName(nav) }}
           </a-menu-item>
         </template>
