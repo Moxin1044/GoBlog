@@ -162,6 +162,7 @@ func SetupRouter(r *gin.Engine) {
 				aiAdmin.PUT("/:id", handler.UpdateAIModel)
 				aiAdmin.PUT("/:id/status", handler.UpdateAIModelStatus)
 				aiAdmin.DELETE("/:id", handler.DeleteAIModel)
+				aiAdmin.PUT("/global-config", handler.UpdateAIModelGlobalConfig)
 			}
 
 			// 数据备份

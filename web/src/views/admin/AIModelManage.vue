@@ -10,14 +10,9 @@
     <!-- Global AI Controls -->
     <a-card size="small" class="mb-16">
       <a-row :gutter="16" align="middle">
-        <a-col :span="8">
+        <a-col :span="24">
           <span>{{ $t('admin.aiChatSwitch') }}:</span>
           <a-switch v-model:checked="globalConfig.ai_enabled" @change="handleGlobalConfigChange" class="ml-8" />
-        </a-col>
-        <a-col :span="16">
-          <span>{{ $t('admin.dailyChatLimit') }}:</span>
-          <a-input-number v-model:value="globalConfig.daily_chat_limit" :min="0" :max="9999" style="width: 120px; margin-left: 8px;" />
-          <a-button type="link" size="small" @click="handleGlobalConfigChange">{{ $t('common.save') }}</a-button>
         </a-col>
       </a-row>
     </a-card>
@@ -122,7 +117,6 @@ const newModelTag = ref('')
 
 const globalConfig = reactive({
   ai_enabled: true,
-  daily_chat_limit: 10,
 })
 
 const formState = reactive({
@@ -202,7 +196,6 @@ async function fetchModels() {
     models.value = Array.isArray(data) ? data : (data.list || [])
     if (data.global_config) {
       globalConfig.ai_enabled = data.global_config.ai_enabled ?? true
-      globalConfig.daily_chat_limit = data.global_config.daily_chat_limit ?? 10
     }
   } catch { /* handled */ } finally {
     loading.value = false

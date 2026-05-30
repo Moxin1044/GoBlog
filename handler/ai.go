@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/moxin/GoBlog/config"
 	"github.com/moxin/GoBlog/database"
 	"github.com/moxin/GoBlog/model"
 	"github.com/moxin/GoBlog/utils"
@@ -85,7 +84,7 @@ func UpdateAIConfig(c *gin.Context) {
 	responseSuccess(c, nil)
 }
 
-// Chat AI对话（流式SSE输出、携带文章上下文、每日次数限制检查、调用用户配置的AI模型）
+// Chat AI对话（流式SSE输出、携带文章上下文、调用用户配置的AI模型）
 func Chat(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
@@ -96,19 +95,6 @@ func Chat(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		responseError(c, "参数错误: "+err.Error())
 		return
-	}
-
-	// 每日次数限制检查
-	if config.AppConfig.AI.MaxDailyPerUser > 0 {
-		var count int64
-		today := time.Now().Format("2006-01-02")
-		database.DB.Model(&model.ChatMessage{}).
-			Where("user_id = ? AND role = ? AND DATE(created_at) = ?", userID, "user", today).
-			Count(&count)
-		if int(count) >= config.AppConfig.AI.MaxDailyPerUser {
-			responseErrorWithCode(c, http.StatusTooManyRequests, "今日对话次数已达上限")
-			return
-		}
 	}
 
 	// 获取用户AI配置

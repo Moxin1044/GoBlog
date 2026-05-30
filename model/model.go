@@ -252,7 +252,11 @@ func AutoMigrate(db *gorm.DB) error {
 		return err
 	}
 
-	db.Exec("ALTER TABLE `navigations` DROP FOREIGN KEY IF EXISTS `fk_navigations_children`")
+	var fkCount int64
+	db.Raw("SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'navigations' AND CONSTRAINT_NAME = 'fk_navigations_children' AND CONSTRAINT_TYPE = 'FOREIGN KEY'").Scan(&fkCount)
+	if fkCount > 0 {
+		db.Exec("ALTER TABLE `navigations` DROP FOREIGN KEY `fk_navigations_children`")
+	}
 
 	return nil
 }

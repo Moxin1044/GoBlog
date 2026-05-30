@@ -10,6 +10,13 @@ import (
 	"github.com/moxin/GoBlog/utils"
 )
 
+func normalizeParentID(pid *uint) *uint {
+	if pid != nil && *pid == 0 {
+		return nil
+	}
+	return pid
+}
+
 // GetNavigationList 获取导航列表（前台，只返回启用的）
 func GetNavigationList(c *gin.Context) {
 	var navigations []model.Navigation
@@ -68,7 +75,7 @@ func CreateNavigation(c *gin.Context) {
 	navigation := model.Navigation{
 		Name:       req.Name,
 		NameEn:     req.NameEn,
-		ParentID:   req.ParentID,
+		ParentID:   normalizeParentID(req.ParentID),
 		Type:       req.Type,
 		Link:       req.Link,
 		CategoryID: req.CategoryID,
@@ -117,7 +124,7 @@ func UpdateNavigation(c *gin.Context) {
 	updates := map[string]interface{}{
 		"name":        req.Name,
 		"name_en":     req.NameEn,
-		"parent_id":   req.ParentID,
+		"parent_id":   normalizeParentID(req.ParentID),
 		"type":        req.Type,
 		"link":        req.Link,
 		"category_id": req.CategoryID,

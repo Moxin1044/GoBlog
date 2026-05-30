@@ -17,7 +17,14 @@ func GetAIModelList(c *gin.Context) {
 		responseErrorWithCode(c, http.StatusInternalServerError, "获取AI模型列表失败")
 		return
 	}
-	responseSuccess(c, models)
+
+	aiEnabled := getConfigValue("ai_enabled")
+	responseSuccess(c, gin.H{
+		"list": models,
+		"global_config": gin.H{
+			"ai_enabled": aiEnabled == "true",
+		},
+	})
 }
 
 // CreateAIModel 创建AI模型提供商
@@ -136,6 +143,26 @@ func DeleteAIModel(c *gin.Context) {
 
 	adminName, _ := c.Get("admin_name")
 	recordOperationLog(adminID, adminName.(string), "删除AI模型提供商", aiModel.Name, "成功", utils.GetClientIP(c))
+
+	responseSuccess(c, nil)
+}
+
+// UpdateAIModelGlobalConfig 更新AI全局配置
+func UpdateAIModelGlobalConfig(c *gin.Context) {
+	adminID := c.GetUint("admin_id")
+
+	var req struct {
+		AIEnabled bool `json:"ai_enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responseError(c, "参数错误: "+err.Error())
+		return
+	}
+
+	setConfigValue("ai_enabled", fmt.Sprintf("%v", req.AIEnabled))
+
+	adminName, _ := c.Get("admin_name")
+	recordOperationLog(adminID, adminName.(string), "更新AI全局配置", "ai_enabled", fmt.Sprintf("%v", req.AIEnabled), utils.GetClientIP(c))
 
 	responseSuccess(c, nil)
 }
