@@ -14,14 +14,8 @@
           @click="handleMenuClick"
         >
           <a-menu-item key="home">{{ $t('nav.home') }}</a-menu-item>
-          <template v-for="nav in navigations" :key="nav.id">
-            <a-sub-menu v-if="nav.children && nav.children.length > 0" :key="nav.id">
-              <template #title>{{ getNavName(nav) }}</template>
-              <a-menu-item v-for="child in nav.children" :key="child.id" @click="handleNavClick(child)">
-                {{ getNavName(child) }}
-              </a-menu-item>
-            </a-sub-menu>
-            <a-menu-item v-else :key="nav.id" @click="handleNavClick(nav)">
+          <template v-for="nav in flatNavigations" :key="nav.id">
+            <a-menu-item :key="nav.id" @click="handleNavClick(nav)">
               {{ getNavName(nav) }}
             </a-menu-item>
           </template>
@@ -92,16 +86,8 @@
         <a-menu-item key="home" @click="router.push('/')">
           <HomeOutlined /> {{ $t('nav.home') }}
         </a-menu-item>
-        <template v-for="nav in navigations" :key="nav.id">
-          <a-sub-menu v-if="nav.children && nav.children.length > 0" :key="nav.id">
-            <template #title>
-              <AppstoreOutlined /> {{ getNavName(nav) }}
-            </template>
-            <a-menu-item v-for="child in nav.children" :key="child.id" @click="handleNavClick(child)">
-              {{ getNavName(child) }}
-            </a-menu-item>
-          </a-sub-menu>
-          <a-menu-item v-else :key="nav.id" @click="handleNavClick(nav)">
+        <template v-for="nav in flatNavigations" :key="nav.id">
+          <a-menu-item :key="nav.id" @click="handleNavClick(nav)">
             <AppstoreOutlined /> {{ getNavName(nav) }}
           </a-menu-item>
         </template>
@@ -140,6 +126,19 @@ const appStore = useAppStore()
 const searchText = ref('')
 const mobileMenuVisible = ref(false)
 const navigations = ref<any[]>([])
+
+const flatNavigations = computed(() => {
+  const result: any[] = []
+  for (const nav of navigations.value) {
+    result.push(nav)
+    if (nav.children && nav.children.length > 0) {
+      for (const child of nav.children) {
+        result.push(child)
+      }
+    }
+  }
+  return result
+})
 
 const selectedKeys = computed(() => {
   if (route.path === '/') return ['home']
