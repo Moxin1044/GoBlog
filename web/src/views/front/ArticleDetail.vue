@@ -23,7 +23,8 @@
                 <ReloadOutlined /> {{ $t('article.refreshSummary') }}
               </a-button>
             </div>
-            <p v-if="article.ai_summary">{{ article.ai_summary }}</p>
+            <p v-if="article.summary">{{ article.summary }}</p>
+            <a-spin v-else-if="summaryLoading" size="small" />
             <p v-else class="ai-summary-empty">{{ $t('common.noData') }}</p>
           </div>
 
@@ -193,10 +194,25 @@ async function fetchArticle() {
     const id = Number(route.params.id)
     const res = await getArticleDetail(id)
     article.value = res.data
+    if (!article.value.summary) {
+      autoGenerateSummary(id)
+    }
   } catch {
     // handled
   } finally {
     loading.value = false
+  }
+}
+
+async function autoGenerateSummary(id: number) {
+  summaryLoading.value = true
+  try {
+    const res = await generateAISummary(id)
+    article.value.summary = res.data?.summary || ''
+  } catch {
+    // handled silently
+  } finally {
+    summaryLoading.value = false
   }
 }
 
@@ -230,7 +246,7 @@ async function refreshSummary() {
   try {
     const id = Number(route.params.id)
     const res = await generateAISummary(id)
-    article.value.ai_summary = res.data?.summary || ''
+    article.value.summary = res.data?.summary || ''
     message.success(t('common.success'))
   } catch {
     // handled
