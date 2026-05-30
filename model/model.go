@@ -236,17 +236,23 @@ type Navigation struct {
 	UpdatedAt  time.Time      `json:"updated_at"`
 	DeletedAt  gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Children []Navigation `gorm:"foreignKey:ParentID;references:ID" json:"children,omitempty"`
+	Children []Navigation `gorm:"-" json:"children,omitempty"`
 	Category *Category    `gorm:"foreignKey:CategoryID" json:"category,omitempty"`
 }
 
 // AutoMigrate 自动迁移数据库表结构
 func AutoMigrate(db *gorm.DB) error {
-	return db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&User{}, &Article{}, &Category{}, &Tag{}, &ArticleTag{},
 		&Comment{}, &Like{}, &Subscription{}, &SubscriptionCategory{},
 		&AIModel{}, &UserAIConfig{}, &ChatMessage{}, &SiteConfig{},
 		&Admin{}, &OperationLog{}, &VerificationCode{}, &VisitLog{},
 		&Backup{}, &Navigation{},
-	)
+	); err != nil {
+		return err
+	}
+
+	db.Exec("ALTER TABLE `navigations` DROP FOREIGN KEY IF EXISTS `fk_navigations_children`")
+
+	return nil
 }

@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"bufio"
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -118,4 +121,109 @@ func LikeArticle(c *gin.Context) {
 	database.DB.Model(&article).UpdateColumn("like_count", article.LikeCount+1)
 
 	responseSuccess(c, gin.H{"like_count": article.LikeCount + 1})
+}
+
+// GenerateAISummary 生成AI摘要
+func GenerateAISummary(c *gin.Context) {
+	id := c.Param("id")
+
+	var article model.Article
+	if err := database.DB.First(&article, id).Error; err != nil {
+		responseErrorWithCode(c, http.StatusNotFound, "文章不存在")
+		return
+	}
+
+	var aiConfig model.UserAIConfig
+	if err := database.DB.Where("user_id = ?", c.GetUint("user_id")).First(&aiConfig).Error; err != nil {
+		responseError(c, "请先配置AI参数")
+		return
+	}
+
+	apiURL := aiConfig.APIUrl
+	if apiURL == "" && aiConfig.ModelID > 0 {
+		var aiModel model.AIModel
+		if err := database.DB.First(&aiModel, aiConfig.ModelID).Error; err == nil {
+			apiURL = aiModel.APIUrl
+		}
+	}
+	if apiURL == "" {
+		responseError(c, "AI接口地址未配置")
+		return
+	}
+
+	modelName := aiConfig.ModelName
+	apiToken := aiConfig.APIToken
+
+	messages := []map[string]string{
+		{"role": "system", "content": "你是一个文章摘要生成助手，请用简洁的中文总结以下文章的核心内容，不超过200字。"},
+		{"role": "user", "content": article.Content},
+	}
+
+	requestBody := map[string]interface{}{
+		"model":       modelName,
+		"messages":    messages,
+		"temperature": 0.3,
+	}
+	bodyBytes, _ := json.Marshal(requestBody)
+
+	httpReq, _ := http.NewRequest("POST", apiURL, bytes.NewReader(bodyBytes))
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Bearer "+apiToken)
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		responseErrorWithCode(c, http.StatusInternalServerError, "AI接口调用失败: "+err.Error())
+		return
+	}
+	defer resp.Body.Close()
+
+	contentType := resp.Header.Get("Content-Type")
+	var summary string
+
+	if bytes.Contains([]byte(contentType), []byte("text/event-stream")) {
+		scanner := bufio.NewScanner(resp.Body)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if len(line) > 6 && line[:6] == "data: " {
+				data := line[6:]
+				if data == "[DONE]" {
+					break
+				}
+				var sseData map[string]interface{}
+				if err := json.Unmarshal([]byte(data), &sseData); err != nil {
+					continue
+				}
+				if choices, ok := sseData["choices"].([]interface{}); ok && len(choices) > 0 {
+					if choice, ok := choices[0].(map[string]interface{}); ok {
+						if delta, ok := choice["delta"].(map[string]interface{}); ok {
+							if content, ok := delta["content"].(string); ok {
+								summary += content
+							}
+						}
+					}
+				}
+			}
+		}
+	} else {
+		var result map[string]interface{}
+		json.NewDecoder(resp.Body).Decode(&result)
+		if choices, ok := result["choices"].([]interface{}); ok && len(choices) > 0 {
+			if choice, ok := choices[0].(map[string]interface{}); ok {
+				if message, ok := choice["message"].(map[string]interface{}); ok {
+					if content, ok := message["content"].(string); ok {
+						summary = content
+					}
+				}
+			}
+		}
+	}
+
+	if summary == "" {
+		responseError(c, "AI摘要生成失败")
+		return
+	}
+
+	database.DB.Model(&article).Update("summary", summary)
+	responseSuccess(c, gin.H{"summary": summary})
 }

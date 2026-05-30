@@ -26,8 +26,8 @@
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'result'">
-          <a-tag :color="record.result === 'success' ? 'green' : 'red'">
-            {{ record.result === 'success' ? $t('admin.success') : $t('admin.fail') }}
+          <a-tag :color="isSuccess(record.result) ? 'green' : 'orange'">
+            {{ record.result }}
           </a-tag>
         </template>
       </template>
@@ -63,6 +63,10 @@ const columns = [
   { title: 'IP', dataIndex: 'ip', key: 'ip', width: 140 },
   { title: t('admin.actionTime'), dataIndex: 'created_at', key: 'created_at', width: 180 },
 ]
+
+function isSuccess(result: string) {
+  return result === '成功' || result === 'success'
+}
 
 async function fetchLogs() {
   loading.value = true

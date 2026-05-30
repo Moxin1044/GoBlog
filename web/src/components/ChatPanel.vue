@@ -87,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, computed } from 'vue'
+import { ref, nextTick, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -95,6 +95,7 @@ import {
   PlusOutlined, WarningOutlined, FileTextOutlined,
 } from '@ant-design/icons-vue'
 import { streamChat } from '@/api/ai'
+import { getAIConfig } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 import MarkdownRenderer from './MarkdownRenderer.vue'
 
@@ -108,9 +109,10 @@ const inputText = ref('')
 const streaming = ref(false)
 const messages = ref<{ role: string; content: string }[]>([])
 const messagesRef = ref<HTMLElement>()
+const aiConfigured = ref(false)
 
 const hasAIConfig = computed(() => {
-  return !!localStorage.getItem('ai_configured')
+  return aiConfigured.value
 })
 
 const articleContext = computed(() => {
@@ -173,6 +175,21 @@ function handleSend(e?: any) {
     }
   )
 }
+
+async function checkAIConfig() {
+  if (!userStore.isLoggedIn()) return
+  try {
+    const res = await getAIConfig()
+    const data = res.data
+    aiConfigured.value = !!(data?.api_token && data?.model_name)
+  } catch {
+    aiConfigured.value = false
+  }
+}
+
+onMounted(() => {
+  checkAIConfig()
+})
 </script>
 
 <style scoped lang="less">

@@ -30,6 +30,7 @@ func SetupRouter(r *gin.Engine) {
 			article.POST("/:id/like", handler.LikeArticle)
 			article.GET("/:id/comments", handler.GetComments)
 			article.POST("/:id/comment", handler.SubmitComment)
+			article.POST("/:id/ai-summary", handler.GenerateAISummary)
 		}
 
 		// 分类标签
@@ -169,6 +170,7 @@ func SetupRouter(r *gin.Engine) {
 				backupAdmin.POST("", handler.CreateBackup)
 				backupAdmin.GET("/:id/download", handler.DownloadBackup)
 				backupAdmin.DELETE("/:id", handler.DeleteBackup)
+				backupAdmin.PUT("/auto-config", handler.UpdateAutoBackupConfig)
 			}
 
 			// 操作日志

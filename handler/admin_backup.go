@@ -119,3 +119,20 @@ func DeleteBackup(c *gin.Context) {
 
 	responseSuccess(c, nil)
 }
+
+// UpdateAutoBackupConfig 更新自动备份配置
+func UpdateAutoBackupConfig(c *gin.Context) {
+	var req struct {
+		Enabled   bool   `json:"enabled"`
+		Frequency string `json:"frequency"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		responseError(c, "参数错误: "+err.Error())
+		return
+	}
+
+	setConfigValue("auto_backup_enabled", fmt.Sprintf("%v", req.Enabled))
+	setConfigValue("auto_backup_frequency", req.Frequency)
+
+	responseSuccess(c, nil)
+}

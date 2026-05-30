@@ -85,7 +85,7 @@ func UpdateUserInfo(c *gin.Context) {
 	responseSuccess(c, nil)
 }
 
-// ChangePassword 修改密码
+// ChangePassword 修改密码（支持普通用户和管理员）
 func ChangePassword(c *gin.Context) {
 	userID := c.GetUint("user_id")
 
@@ -98,25 +98,48 @@ func ChangePassword(c *gin.Context) {
 		return
 	}
 
+	// 先尝试从 users 表查找
 	var user model.User
-	if err := database.DB.First(&user, userID).Error; err != nil {
-		responseErrorWithCode(c, http.StatusNotFound, "用户不存在")
+	if err := database.DB.First(&user, userID).Error; err == nil {
+		if !utils.CheckPassword(req.OldPassword, user.Password) {
+			responseError(c, "原密码错误")
+			return
+		}
+
+		hashedPassword, err := utils.HashPassword(req.NewPassword)
+		if err != nil {
+			responseErrorWithCode(c, http.StatusInternalServerError, "密码加密失败")
+			return
+		}
+
+		database.DB.Model(&user).Update("password", hashedPassword)
+		responseSuccess(c, nil)
 		return
 	}
 
-	if !utils.CheckPassword(req.OldPassword, user.Password) {
-		responseError(c, "原密码错误")
-		return
+	// 如果是管理员，从 admins 表查找
+	adminID, exists := c.Get("admin_id")
+	if exists {
+		var admin model.Admin
+		if err := database.DB.First(&admin, adminID).Error; err == nil {
+			if !utils.CheckPassword(req.OldPassword, admin.Password) {
+				responseError(c, "原密码错误")
+				return
+			}
+
+			hashedPassword, err := utils.HashPassword(req.NewPassword)
+			if err != nil {
+				responseErrorWithCode(c, http.StatusInternalServerError, "密码加密失败")
+				return
+			}
+
+			database.DB.Model(&admin).Update("password", hashedPassword)
+			responseSuccess(c, nil)
+			return
+		}
 	}
 
-	hashedPassword, err := utils.HashPassword(req.NewPassword)
-	if err != nil {
-		responseErrorWithCode(c, http.StatusInternalServerError, "密码加密失败")
-		return
-	}
-
-	database.DB.Model(&user).Update("password", hashedPassword)
-	responseSuccess(c, nil)
+	responseErrorWithCode(c, http.StatusNotFound, "用户不存在")
 }
 
 // UploadAvatar 上传头像
