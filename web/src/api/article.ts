@@ -8,4 +8,4 @@ export const submitComment = (id: number, data: Record<string, any>) => request.
 export const getCategories = () => request.get('/categories')
 export const getTags = () => request.get('/tags')
 export const getNavigations = () => request.get('/navigations')
-export const generateAISummary = (id: number) => request.post(`/article/${id}/ai-summary`)
+export const generateAISummary = (id: number) => request.post(`/user/article/${id}/ai-summary`)

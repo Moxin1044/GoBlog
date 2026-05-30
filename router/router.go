@@ -30,7 +30,6 @@ func SetupRouter(r *gin.Engine) {
 			article.POST("/:id/like", handler.LikeArticle)
 			article.GET("/:id/comments", handler.GetComments)
 			article.POST("/:id/comment", handler.SubmitComment)
-			article.POST("/:id/ai-summary", handler.GenerateAISummary)
 		}
 
 		// 分类标签
@@ -63,6 +62,9 @@ func SetupRouter(r *gin.Engine) {
 			// AI对话
 			user.POST("/chat", handler.Chat)
 			user.GET("/chat/history", handler.GetChatHistory)
+
+			// AI摘要
+			user.POST("/article/:id/ai-summary", handler.GenerateAISummary)
 		}
 
 		// 管理员接口

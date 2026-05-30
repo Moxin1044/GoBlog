@@ -21,7 +21,13 @@ export const streamChat = async (
     })
 
     if (!response.ok) {
-      onError(`HTTP error: ${response.status}`)
+      const errText = await response.text()
+      try {
+        const errJson = JSON.parse(errText)
+        onError(errJson.message || `HTTP error: ${response.status}`)
+      } catch {
+        onError(`HTTP error: ${response.status}`)
+      }
       return
     }
 
@@ -32,12 +38,45 @@ export const streamChat = async (
     }
 
     const decoder = new TextDecoder()
+    let buffer = ''
+
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      const text = decoder.decode(value, { stream: true })
-      onMessage(text)
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed || trimmed.startsWith(':')) continue
+
+        if (trimmed.startsWith('event:')) continue
+
+        if (trimmed.startsWith('data:')) {
+          const dataStr = trimmed.slice(5).trim()
+          if (dataStr === '[DONE]') {
+            onDone()
+            return
+          }
+
+          try {
+            const parsed = JSON.parse(dataStr)
+            if (parsed.done) {
+              onDone()
+              return
+            }
+            if (parsed.content) {
+              onMessage(parsed.content)
+            }
+          } catch {
+            // skip malformed JSON
+          }
+        }
+      }
     }
+
     onDone()
   } catch (error: any) {
     onError(error.message || 'Unknown error')
